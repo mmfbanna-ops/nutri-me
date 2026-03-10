@@ -15,10 +15,22 @@ const PLAN_MONTHS = { 1: 1, 2: 2, 3: 3 };
 const PLAN_LABELS = { 1: "شهر", 2: "شهرين", 3: "٣ أشهر" };
 
 const DEMO_CLIENTS = [
-  { name: "Soso",   code: "1234", plan: 1, startDate: "2026-03-09" },
-  { name: "Israa",  code: "1350", plan: 1, startDate: "2026-03-09" },
-  { name: "Mariam", code: "8889", plan: 1, startDate: "2026-03-09" },
+  { name: "Soso",   code: "1234", plan: 1, startDate: "2026-03-09", sessionDay: 0 },
+  { name: "Israa",  code: "1350", plan: 1, startDate: "2026-03-09", sessionDay: 0 },
+  { name: "Mariam", code: "8889", plan: 1, startDate: "2026-03-09", sessionDay: 0 },
 ];
+
+const DAYS_AR = ["الأحد","الاثنين","الثلاثاء","الأربعاء","الخميس","الجمعة","السبت"];
+
+function getNextSessionDate(sessionDay) {
+  const today = new Date();
+  const todayDay = today.getDay();
+  let diff = sessionDay - todayDay;
+  if (diff <= 0) diff += 7;
+  const next = new Date(today);
+  next.setDate(today.getDate() + diff);
+  return next.toLocaleDateString("ar-EG", { weekday:"long", day:"numeric", month:"long" });
+}
 
 function getSubInfo(sub) {
   if (!sub) return null;
@@ -227,6 +239,11 @@ export default function ClientDailyLog() {
       </div>
       {subInfo.followupsLeft > 0 && (
         <div style={{ marginTop: 8, fontSize: 12, color: C.mauve, fontWeight: 700 }}>📅 موعد متابعتك القادمة: الأسبوع {subInfo.weeksDone + 1}</div>
+      )}
+      {loggedInClient?.sessionDay !== undefined && (
+        <div style={{ marginTop: 6, fontSize: 12, color: C.green, fontWeight: 700 }}>
+          🗓️ سيشنك القادم: {getNextSessionDate(loggedInClient.sessionDay ?? 0)}
+        </div>
       )}
     </div>
   ) : null;

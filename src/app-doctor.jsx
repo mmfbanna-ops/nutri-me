@@ -74,11 +74,23 @@ const storage = {
   set:(k,v)=>{ memStore[k]=v; return true; },
 };
 
+const DAYS_AR = ["الأحد","الاثنين","الثلاثاء","الأربعاء","الخميس","الجمعة","السبت"];
+
 const INIT_CLIENTS = [
-  { name:"Soso",   code:"1234", plan:1, startDate:"2026-03-09" },
-  { name:"Israa",  code:"1350", plan:1, startDate:"2026-03-09" },
-  { name:"Mariam", code:"8889", plan:1, startDate:"2026-03-09" },
+  { name:"Soso",   code:"1234", plan:1, startDate:"2026-03-09", sessionDay:0 },
+  { name:"Israa",  code:"1350", plan:1, startDate:"2026-03-09", sessionDay:0 },
+  { name:"Mariam", code:"8889", plan:1, startDate:"2026-03-09", sessionDay:0 },
 ];
+
+function getNextSessionDate(sessionDay) {
+  const today = new Date();
+  const todayDay = today.getDay();
+  let diff = sessionDay - todayDay;
+  if (diff <= 0) diff += 7;
+  const next = new Date(today);
+  next.setDate(today.getDate() + diff);
+  return next.toLocaleDateString("ar-EG", { weekday:"long", day:"numeric", month:"long" });
+}
 
 export default function Dashboard() {
   const [view, setView]           = useState("overview"); // overview | client | addClient
@@ -239,7 +251,16 @@ export default function Dashboard() {
             </div>
             <Lbl>تاريخ البداية</Lbl>
             <input type="date" value={editing.startDate} onChange={e=>setEditing(ec=>({...ec,startDate:e.target.value}))}
-              style={{ background:C.bg, border:`1.5px solid ${C.border}`, borderRadius:10, padding:"10px 14px", color:C.text, fontSize:14, fontWeight:600, width:"100%", outline:"none", marginBottom:24, boxSizing:"border-box" }} />
+              style={{ background:C.bg, border:`1.5px solid ${C.border}`, borderRadius:10, padding:"10px 14px", color:C.text, fontSize:14, fontWeight:600, width:"100%", outline:"none", marginBottom:16, boxSizing:"border-box" }} />
+            <Lbl>يوم السيشن الأسبوعي 📅</Lbl>
+            <div style={{ display:"flex", gap:6, flexWrap:"wrap", marginBottom:24 }}>
+              {DAYS_AR.map((d,i)=>(
+                <button key={i} onClick={()=>setEditing(ec=>({...ec,sessionDay:i}))}
+                  style={{ padding:"8px 10px", borderRadius:10, fontSize:12, fontWeight:800, cursor:"pointer", background:(editing.sessionDay??0)===i?C.blush:C.bg, border:(editing.sessionDay??0)===i?`2px solid ${C.pink}`:`1.5px solid ${C.border}`, color:(editing.sessionDay??0)===i?C.pink:C.muted, transition:"all 0.2s" }}>
+                  {d}
+                </button>
+              ))}
+            </div>
             <div style={{ display:"flex", gap:10 }}>
               <button onClick={()=>setEditing(null)} style={{ flex:1, padding:"11px 0", borderRadius:12, background:C.bg, border:`1.5px solid ${C.border}`, color:C.muted, cursor:"pointer", fontSize:14, fontWeight:700 }}>إلغاء</button>
               <button onClick={()=>saveEdit(editing)} style={{ flex:2, padding:"11px 0", borderRadius:12, background:`linear-gradient(135deg,${C.pink},${C.mauve})`, border:"none", color:C.white, cursor:"pointer", fontSize:14, fontWeight:800, boxShadow:`0 4px 16px ${C.shadow}` }}>✓ حفظ</button>
@@ -486,6 +507,14 @@ function ClientDetail({ client, data, range, setRange, onMsg }) {
             </div>
           </div>
         )}
+        {/* Session day */}
+        <div style={{ background:C.greenLight, border:`1px solid ${C.greenBorder}`, borderRadius:12, padding:"10px 14px", display:"flex", gap:10, alignItems:"center", marginTop:10 }}>
+          <span style={{ fontSize:18 }}>🗓️</span>
+          <div>
+            <div style={{ fontSize:12, color:C.green, fontWeight:800 }}>يوم السيشن: {DAYS_AR[client.sessionDay??0]}</div>
+            <div style={{ fontSize:11, color:C.sub, fontWeight:500 }}>السيشن القادم: {getNextSessionDate(client.sessionDay??0)}</div>
+          </div>
+        </div>
       </div>
 
       {/* Today */}
