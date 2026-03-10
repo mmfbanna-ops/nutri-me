@@ -15,10 +15,9 @@ const PLAN_MONTHS = { 1: 1, 2: 2, 3: 3 };
 const PLAN_LABELS = { 1: "شهر", 2: "شهرين", 3: "٣ أشهر" };
 
 const DEMO_CLIENTS = [
-  { name: "Sarah M.",  code: "1234", plan: 1, startDate: "2026-02-16" },
-  { name: "Amal K.",   code: "5678", plan: 2, startDate: "2026-01-20" },
-  { name: "Noor H.",   code: "9012", plan: 3, startDate: "2026-01-01" },
-  { name: "Fatima R.", code: "3456", plan: 1, startDate: "2026-03-01" },
+  { name: "Soso",   code: "1234", plan: 1, startDate: "2026-03-09" },
+  { name: "Israa",  code: "1350", plan: 1, startDate: "2026-03-09" },
+  { name: "Mariam", code: "8889", plan: 1, startDate: "2026-03-09" },
 ];
 
 function getSubInfo(sub) {
