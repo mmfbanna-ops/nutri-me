@@ -67,7 +67,7 @@ const defaultLog = {
 };
 
 const C = {
-  bg: "#FDF8F5", card: "#FFFFFF", border: "#EDD9E5", borderLight: "#F5EBF0",
+  bg: "#FDF8F5", card: "#FFFFFF", border: "#EDD9E5", borderLight: "#F5EBF0", borderSoft: "#F5EBF0",
   pink: "#C2607A", rose: "#D4829A", mauve: "#9B72AA", lavender: "#B8A0CC",
   blush: "#F2D5DF", peach: "#F7E8E0",
   text: "#2D1F28", sub: "#8A6070", muted: "#BFA0AD", red: "#C9607A",
@@ -80,6 +80,36 @@ const WEEK_MESSAGES = [
   { title: "أسبوعان خلصوا! 💪",        body: "نصف الشهر راح وأنتِ ماشية بثبات. فخورة بيكِ!" },
   { title: "ثلاثة أسابيع! ✨",          body: "جسمك بدأ يتكيف — استمري على نفس الطاقة!" },
   { title: "أنهيتِ الشهر الأول! 🎉",   body: "إنجاز حقيقي! راجعي تقدمك مع دكتورتك." },
+];
+
+const DAILY_TIPS = [
+  "💧 ابدأي يومك بكوب ماء قبل أي شيء — يحفز الأيض ويوقظ الجسم!",
+  "🥦 كل لون في طبقك يعني فيتامين مختلف — تنوعي في الخضار!",
+  "🌙 النوم المبكر يقلل هرمون الجوع — حاولي تنامي قبل 11",
+  "🧘 5 دقائق تنفس عميق يقلل الكورتيزول ويخفف الشهية العاطفية",
+  "🍽️ أكلي ببطء وامضغي كويس — الشعور بالشبع بيوصل بعد 20 دقيقة",
+  "🏃 حركة بسيطة 10 دقائق بعد الأكل تحسن سكر الدم",
+  "🫐 الفاكهة الملونة الداكنة مليانة أنتيأكسيدانت — توت، رمان، كرز",
+  "☀️ فيتامين D مهم جداً للهرمونات — اشمسي ولو 15 دقيقة",
+  "🥚 البروتين في الفطار يقلل الجوع طول اليوم",
+  "🫀 الأكل المنتظم أهم من الحمية — لا تفوّتي وجباتك",
+  "🌿 الأعشاب والتوابل زي الكركم والزنجبيل مضادة للالتهاب",
+  "💪 العضلات تحرق سعرات حتى وانتِ نايمة — المقاومة مهمة",
+  "🎯 الهدف الأسبوعي أهم من الهدف اليومي — الاستمرارية هي الفوز",
+  "🍵 الشاي الأخضر يدعم الأيض ومليان مضادات أكسدة",
+];
+
+const BADGES = [
+  { id:"first_log",   emoji:"🌱", title:"أول تسجيل",     desc:"سجّلتِ لأول مرة!",          condition:(streak,_)=>streak>=1 },
+  { id:"streak3",     emoji:"🔥", title:"3 أيام متتالية", desc:"استمراريتك رائعة!",          condition:(streak,_)=>streak>=3 },
+  { id:"streak7",     emoji:"⚡", title:"أسبوع كامل",     desc:"7 أيام بدون توقف!",         condition:(streak,_)=>streak>=7 },
+  { id:"streak14",    emoji:"💎", title:"أسبوعين",        desc:"14 يوم — بطلة!",            condition:(streak,_)=>streak>=14 },
+  { id:"streak30",    emoji:"👑", title:"شهر كامل",       desc:"30 يوم — ملكة!",            condition:(streak,_)=>streak>=30 },
+  { id:"water_hero",  emoji:"💧", title:"بطلة الماء",     desc:"شربتِ 2L+ اليوم",           condition:(_,log)=>parseFloat(log.water||0)>=2 },
+  { id:"sleep_hero",  emoji:"🌙", title:"نوم ممتاز",      desc:"نمتِ 8 ساعات+",             condition:(_,log)=>parseFloat(log.sleep||0)>=8 },
+  { id:"exercise",    emoji:"🏃", title:"تمرين اليوم",    desc:"مارستِ رياضة اليوم",        condition:(_,log)=>log.exercise===true },
+  { id:"no_fastfood", emoji:"🥗", title:"أكل نظيف",       desc:"بدون fast food اليوم",      condition:(_,log)=>log.fastFood===false },
+  { id:"plan",        emoji:"⭐", title:"التزام كامل",    desc:"التزمتِ بالخطة اليوم",      condition:(_,log)=>log.followedPlan===true },
 ];
 
 // Google Font import
@@ -102,7 +132,216 @@ const FONT_STYLE = `
   .numpad-btn.del { font-size:17px; color:#BFA0AD; }
 `;
 
+// ── ARTICLES DATA ──
+const ARTICLES = [
+  {
+    id:1, emoji:"🥗",
+    title:"كيف تبني طبق صحي متوازن؟",
+    category:"تغذية أساسية",
+    time:"3 دقائق",
+    color:"#E6F5EE",
+    border:"#A8D9BC",
+    accent:"#5DAD85",
+    body:`الطبق الصحي المتوازن هو أساس أي خطة غذائية ناجحة. المعادلة البسيطة:
+
+🥦 نصف الطبق خضروات وفواكه
+🍗 ربع الطبق بروتين (دجاج، سمك، بيض، بقوليات)
+🌾 ربع الطبق كربوهيدرات معقدة (أرز بني، كينوا، خبز أسمر)
+
+ولا تنسي إضافة دهون صحية مثل زيت الزيتون أو الأفوكادو — فهي ضرورية لامتصاص الفيتامينات.`
+  },
+  {
+    id:2, emoji:"💧",
+    title:"الماء ودوره في فقدان الوزن",
+    category:"نصايح يومية",
+    time:"2 دقيقة",
+    color:"#EDE8F5",
+    border:"#B8A0CC",
+    accent:"#9B72AA",
+    body:`شرب الماء الكافي له دور محوري في رحلة تخسيس الوزن:
+
+✅ يزيد من معدل حرق السعرات بنسبة تصل إلى 30%
+✅ يقلل الشعور بالجوع — أحياناً العطش يُخطأ به للجوع
+✅ يساعد الكلى على عملها مما يخفف عبء الكبد ويزيد حرق الدهون
+✅ يحسن مستوى الطاقة والتركيز
+
+الكمية الموصى بها: 8-10 أكواب يومياً، وأكثر في أيام التمرين.`
+  },
+  {
+    id:3, emoji:"🍳",
+    title:"وصفة: بيض بالخضار (15 دقيقة)",
+    category:"وصفات صحية",
+    time:"5 دقائق",
+    color:"#FDF0F4",
+    border:"#EDD9E5",
+    accent:"#C2607A",
+    body:`وصفة سريعة وصحية ومشبعة لفطار أو عشاء خفيف:
+
+المكونات (لشخص واحد):
+• 3 بيضات
+• نصف كوسة مقطعة صغيرة
+• نصف فلفل ألوان
+• ربع بصلة
+• ملح، فلفل، كركم
+• ملعقة زيت زيتون
+
+طريقة التحضير:
+١. سوّتي الخضار في الزيت 5 دقائق
+٢. أضيفي البيض المخفوق
+٣. اطهيه على نار هادية حتى ينضج
+
+سعرات: ~250 كالوري | بروتين: 18 جرام`
+  },
+  {
+    id:4, emoji:"🧠",
+    title:"الأكل العاطفي — كيف تتعاملي معه؟",
+    category:"صحة نفسية وتغذية",
+    time:"4 دقائق",
+    color:"#FFF8E7",
+    border:"#F0D9A0",
+    accent:"#C8963E",
+    body:`الأكل العاطفي هو تناول الطعام استجابةً للمشاعر لا للجوع الحقيقي. وهو أحد أكبر عوائق فقدان الوزن.
+
+علامات الأكل العاطفي:
+⚠️ الرغبة في أكل محدد (حلويات، مقليات)
+⚠️ الأكل حتى بعد الشبع
+⚠️ الأكل في أوقات التوتر أو الملل
+
+كيف تتعاملي معه:
+✨ تعرّفي على المحفز — ما الشعور الذي يسبق الأكل؟
+✨ اكتبي مشاعرك بدلاً من أكلها
+✨ استبدلي العادة بنشاط آخر (مشي، قراءة، تنفس)
+✨ اطلبي مساعدة متخصصة إذا تكرر كثيراً`
+  },
+  {
+    id:5, emoji:"🌙",
+    title:"النوم وتأثيره على الوزن",
+    category:"نصايح يومية",
+    time:"3 دقائق",
+    color:"#EDE8F5",
+    border:"#B8A0CC",
+    accent:"#9B72AA",
+    body:`قلة النوم من أكثر العوامل تأثيراً على الوزن — وأكثرها إهمالاً!
+
+ماذا يحدث لجسمك عند قلة النوم:
+😴 يرتفع هرمون الجريلين (هرمون الجوع) بنسبة 24%
+😴 ينخفض هرمون اللبتين (هرمون الشبع)
+😴 يزيد الشوق للسكريات والكربوهيدرات
+😴 ينخفض معدل الأيض
+
+الهدف: 7-9 ساعات نوم جودة عالية يومياً.
+
+نصايح لنوم أفضل:
+✅ نمي وصحي في نفس الوقت يومياً
+✅ أوقفي الشاشات ساعة قبل النوم
+✅ اجعلي غرفتك باردة ومظلمة`
+  },
+];
+
+function PublicHome({ onLoginClick }) {
+  const [openArticle, setOpenArticle] = useState(null);
+
+  if (openArticle) {
+    return (
+      <div style={{ background:C.bg, minHeight:"100vh", direction:"rtl" }}>
+        <style>{FONT_STYLE}</style>
+        {/* Header */}
+        <div style={{ background:C.white, borderBottom:`1px solid ${C.border}`, padding:"14px 20px", display:"flex", alignItems:"center", gap:12, position:"sticky", top:0, zIndex:10, boxShadow:`0 2px 12px ${C.shadow}` }}>
+          <button onClick={()=>setOpenArticle(null)} style={{ background:C.blush, border:`1px solid ${C.border}`, borderRadius:10, color:C.pink, width:36, height:36, fontSize:18, cursor:"pointer" }}>←</button>
+          <div>
+            <div style={{ fontSize:11, color:C.muted, fontWeight:600 }}>{openArticle.category}</div>
+            <div style={{ fontSize:15, fontWeight:900, color:C.text }}>{openArticle.emoji} {openArticle.title}</div>
+          </div>
+        </div>
+        <div style={{ padding:"24px 20px", maxWidth:600, margin:"0 auto" }}>
+          <div style={{ background:C.white, border:`1px solid ${C.border}`, borderRadius:20, padding:"24px 22px", boxShadow:`0 4px 20px ${C.shadow}`, whiteSpace:"pre-line", fontSize:15, lineHeight:2, color:C.text, fontWeight:500, direction:"rtl" }}>
+            {openArticle.body}
+          </div>
+          <div style={{ marginTop:20, background:`linear-gradient(135deg,${C.blush},#F5EBF8)`, border:`1px solid ${C.border}`, borderRadius:16, padding:"18px 20px", textAlign:"center" }}>
+            <div style={{ fontSize:14, color:C.sub, fontWeight:600, marginBottom:10 }}>هل أنتِ عميلة في كلينك Nutri Me؟</div>
+            <button onClick={onLoginClick} style={{ background:`linear-gradient(135deg,${C.pink},${C.mauve})`, border:"none", borderRadius:12, color:C.white, padding:"12px 28px", fontSize:14, fontWeight:800, cursor:"pointer", boxShadow:`0 4px 16px ${C.shadow}` }}>
+              🔑 سجّلي دخولك
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ background:C.bg, minHeight:"100vh", direction:"rtl" }}>
+      <style>{FONT_STYLE}</style>
+
+      {/* Header */}
+      <div style={{ background:C.white, borderBottom:`1px solid ${C.border}`, padding:"14px 20px", display:"flex", alignItems:"center", justifyContent:"space-between", boxShadow:`0 2px 12px ${C.shadow}`, position:"sticky", top:0, zIndex:10 }}>
+        <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+          <img src={LOGO_SRC} alt="Nutri Me" style={{ width:40, height:40, objectFit:"contain" }} />
+          <div>
+            <div style={{ fontSize:15, fontWeight:900, color:C.text }}>Nutri Me</div>
+            <div style={{ fontSize:10, color:C.muted, fontWeight:500 }}>Dr. Mai Elbanna</div>
+          </div>
+        </div>
+        <button onClick={onLoginClick} style={{ background:`linear-gradient(135deg,${C.pink},${C.mauve})`, border:"none", borderRadius:12, color:C.white, padding:"9px 18px", fontSize:13, fontWeight:800, cursor:"pointer", boxShadow:`0 4px 12px ${C.shadow}` }}>
+          🔑 دخول العملاء
+        </button>
+      </div>
+
+      <div style={{ padding:"20px 20px", maxWidth:600, margin:"0 auto" }}>
+
+        {/* Hero */}
+        <div style={{ background:`linear-gradient(135deg,${C.blush},#F5EBF8,#E6F5EE)`, border:`1px solid ${C.border}`, borderRadius:24, padding:"28px 24px", marginBottom:24, textAlign:"center", boxShadow:`0 4px 20px ${C.shadow}` }}>
+          <div style={{ fontSize:42, marginBottom:8 }}>🌸</div>
+          <h1 style={{ fontSize:24, fontWeight:900, color:C.text, margin:"0 0 8px" }}>مرحباً بك في Nutri Me</h1>
+          <p style={{ fontSize:14, color:C.sub, fontWeight:500, lineHeight:1.8, margin:0 }}>
+            كلينك التغذية الأونلاين مع Dr. Mai Elbanna<br/>
+            محتوى تغذوي مجاني للجميع 💚
+          </p>
+        </div>
+
+        {/* Articles */}
+        <div style={{ fontSize:12, color:C.muted, fontWeight:700, letterSpacing:2, marginBottom:14, textTransform:"uppercase" }}>مقالات وتغذية</div>
+        <div style={{ display:"flex", flexDirection:"column", gap:14 }}>
+          {ARTICLES.map(article => (
+            <div key={article.id} onClick={()=>setOpenArticle(article)}
+              style={{ background:C.white, border:`1.5px solid ${C.border}`, borderRadius:18, padding:"18px 18px", cursor:"pointer", boxShadow:`0 3px 16px ${C.shadow}`, transition:"all 0.2s" }}
+              className="card-hover">
+              <div style={{ display:"flex", alignItems:"flex-start", gap:14 }}>
+                <div style={{ width:52, height:52, borderRadius:14, background:article.color, border:`1px solid ${article.border}`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:26, flexShrink:0 }}>
+                  {article.emoji}
+                </div>
+                <div style={{ flex:1 }}>
+                  <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:6 }}>
+                    <span style={{ background:article.color, border:`1px solid ${article.border}`, borderRadius:99, padding:"2px 10px", fontSize:10, color:article.accent, fontWeight:700 }}>
+                      {article.category}
+                    </span>
+                    <span style={{ fontSize:10, color:C.muted, fontWeight:500 }}>⏱ {article.time}</span>
+                  </div>
+                  <div style={{ fontSize:15, fontWeight:800, color:C.text, lineHeight:1.5 }}>{article.title}</div>
+                </div>
+                <div style={{ color:C.muted, fontSize:18 }}>›</div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* CTA */}
+        <div style={{ marginTop:24, background:C.white, border:`1.5px dashed ${C.border}`, borderRadius:20, padding:"24px 20px", textAlign:"center" }}>
+          <div style={{ fontSize:24, marginBottom:8 }}>🩷</div>
+          <div style={{ fontSize:15, fontWeight:800, color:C.text, marginBottom:6 }}>عايزة تبدأي رحلتك؟</div>
+          <div style={{ fontSize:13, color:C.sub, fontWeight:500, lineHeight:1.8, marginBottom:16 }}>
+            تواصلي مع Dr. Mai للاشتراك في برنامج المتابعة الشخصية
+          </div>
+          <button onClick={onLoginClick} style={{ background:`linear-gradient(135deg,${C.pink},${C.mauve})`, border:"none", borderRadius:12, color:C.white, padding:"12px 28px", fontSize:14, fontWeight:800, cursor:"pointer", boxShadow:`0 4px 16px ${C.shadow}` }}>
+            🔑 دخول العملاء
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function ClientDailyLog() {
+  const [showPublic, setShowPublic] = useState(true);
   const [loggedInClient, setLoggedInClient] = useState(null);
   const [codeInput, setCodeInput] = useState("");
   const [codeError, setCodeError] = useState(false);
@@ -137,6 +376,7 @@ export default function ClientDailyLog() {
   function handleLogout() {
     storage.set("__session__", ""); setLoggedInClient(null);
     setLog(defaultLog); setSubmitted(false); setStep(0); setCodeInput("");
+    setShowPublic(true);
   }
 
   function checkExisting() {
@@ -164,11 +404,19 @@ export default function ClientDailyLog() {
   const setPhoto = (meal, data) => setLog(p => ({ ...p, photos: { ...p.photos, [meal]: data } }));
   const photoCount = Object.values(log.photos || {}).filter(Boolean).length;
 
+  // ── PUBLIC HOME ──
+  if (showPublic && !loggedInClient) {
+    return <PublicHome onLoginClick={()=>setShowPublic(false)} />;
+  }
+
   // ── LOGIN ──
   if (!loggedInClient) {
     return (
       <div style={{ background: C.bg, minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
         <style>{FONT_STYLE}</style>
+        <div style={{ position:"absolute", top:16, right:16 }}>
+          <button onClick={()=>setShowPublic(true)} style={{ background:C.blush, border:`1px solid ${C.border}`, borderRadius:10, color:C.sub, padding:"8px 14px", fontSize:12, fontWeight:700, cursor:"pointer" }}>← المقالات</button>
+        </div>
         <div style={{ width: "100%", maxWidth: 360, textAlign: "center" }}>
 
           {/* Logo placeholder + title */}
@@ -218,7 +466,7 @@ export default function ClientDailyLog() {
               دخول ✓
             </button>
           </div>
-          <p style={{ fontSize: 11, color: C.muted, marginTop: 16, fontWeight: 500 }}>الأكواد التجريبية: 1234 · 5678 · 9012 · 3456</p>
+          
         </div>
       </div>
     );
@@ -274,32 +522,203 @@ export default function ClientDailyLog() {
 
   // ── SUCCESS ──
   if (submitted || alreadyLogged) {
+    // Calculate Life Score (Lifesum style)
+    const score = (() => {
+      let s = 0;
+      if (log.water >= 2) s += 20; else if (log.water >= 1) s += 10;
+      if (log.sleep >= 7) s += 20; else if (log.sleep >= 6) s += 10;
+      if (log.followedPlan) s += 25;
+      if (log.exercise) s += 15;
+      if (!log.fastFood) s += 10;
+      if (!log.binge) s += 10;
+      return s;
+    })();
+    const scoreColor = score >= 80 ? C.green : score >= 50 ? "#C8963E" : C.red;
+    const scoreLabel = score >= 80 ? "ممتاز! 🌟" : score >= 50 ? "كويس 👍" : "يمكن أحسن 💪";
+
+    // Streak calculation
+    let streak = 0;
+    try {
+      const r = storage.get(`loglist:${loggedInClient.name}`);
+      if (r) {
+        const logs = JSON.parse(r.value);
+        let d = new Date(); d.setHours(0,0,0,0);
+        for (let i = 0; i < 30; i++) {
+          const dateStr = d.toISOString().slice(0,10);
+          if (logs.includes(dateStr)) { streak++; d.setDate(d.getDate()-1); }
+          else break;
+        }
+      }
+    } catch {}
+
+    // Daily tip (changes daily based on date)
+    const tipIdx = new Date().getDate() % DAILY_TIPS.length;
+    const dailyTip = DAILY_TIPS[tipIdx];
+
+    // Calendar heatmap — last 21 days
+    let logDates = [];
+    try { const r = storage.get(`loglist:${loggedInClient.name}`); if (r) logDates = JSON.parse(r.value); } catch {}
+    const calDays = Array.from({length:21},(_,i)=>{ const d=new Date(); d.setDate(d.getDate()-20+i); return d.toISOString().slice(0,10); });
+
+    // Earned badges
+    const earnedBadges = BADGES.filter(b => b.condition(streak, log));
+
+    // Virtual garden — grows with streak (Plant Nanny style)
+    const gardenStage = streak === 0 ? "🌱" : streak < 3 ? "🌿" : streak < 7 ? "🌸" : streak < 14 ? "🌺" : streak < 30 ? "🌳" : "🌴";
+    const gardenMsg = streak === 0 ? "ابدأي تسجيلك لتنمو حديقتك!" : streak < 3 ? "بذرتك نبتت!" : streak < 7 ? "نباتك بيكبر!" : streak < 14 ? "وردة جميلة! 🌸" : streak < 30 ? "شجرة قوية!" : "نخلة ملكة! 👑";
+
     return (
       <div style={S.page}><style>{FONT_STYLE}</style>
         <div style={{ maxWidth: 440, margin: "0 auto" }}>
           <PageHeader name={loggedInClient.name} onLogout={handleLogout} />
           {SubBanner}
-          <div style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: 24, padding: "36px 28px", textAlign: "center", boxShadow: `0 8px 32px ${C.shadow}` }}>
-            <div style={{ fontSize: 60, marginBottom: 16 }}>{alreadyLogged && !submitted ? "📋" : "✅"}</div>
-            <h2 style={{ fontSize: 22, fontWeight: 900, color: C.pink, marginBottom: 8 }}>
-              {alreadyLogged && !submitted ? "سجّلتِ اليوم!" : "تم الحفظ! 🌸"}
-            </h2>
-            <p style={{ fontSize: 14, color: C.sub, lineHeight: 1.8, marginBottom: 24, fontWeight: 500 }}>
-              {alreadyLogged && !submitted ? `سجلك ليوم ${TODAY} محفوظ.` : "دكتورتك شايفة تحديثك. أحسنتِ!"}
-            </p>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 20 }}>
-              {log.weight && <SChip label="الوزن"    value={`${log.weight} kg`}  color={C.pink} />}
-              {log.waist  && <SChip label="الوسط"    value={`${log.waist} cm`}   color={C.mauve} />}
-              {log.hips   && <SChip label="الأرداف"  value={`${log.hips} cm`}    color={C.lavender} />}
-              {log.arm    && <SChip label="الذراع"   value={`${log.arm} cm`}     color={C.rose} />}
-              {log.water  && <SChip label="الماء"    value={`${log.water} L`}    color="#7BACC4" />}
-              {log.sleep  && <SChip label="النوم"    value={`${log.sleep} ساعة`} color={C.green} />}
-              <SChip label="التوتر" value={`${log.stress}/10`} color={log.stress > 7 ? C.red : C.muted} />
+
+          {/* Daily Tip (Calm style) */}
+          <div style={{ background:`linear-gradient(135deg,#E6F5EE,#F5EBF8)`, border:`1px solid ${C.border}`, borderRadius:16, padding:"14px 18px", marginBottom:14, display:"flex", gap:12, alignItems:"flex-start" }}>
+            <span style={{ fontSize:22, flexShrink:0 }}>💡</span>
+            <div>
+              <div style={{ fontSize:11, color:C.mauve, fontWeight:800, marginBottom:3 }}>نصيحة اليوم</div>
+              <div style={{ fontSize:13, color:C.text, fontWeight:600, lineHeight:1.7 }}>{dailyTip}</div>
             </div>
-            {alreadyLogged && !submitted && (
-              <button style={S.outlineBtn} onClick={() => { setAlreadyLogged(false); setStep(0); }}>تعديل تسجيل اليوم</button>
-            )}
           </div>
+
+          {/* Life Score Card (Lifesum) */}
+          <div style={{ background:C.white, border:`1.5px solid ${C.border}`, borderRadius:24, padding:"20px 22px", marginBottom:14, boxShadow:`0 4px 20px ${C.shadow}` }}>
+            <div style={{ display:"flex", alignItems:"center", gap:16 }}>
+              <div style={{ position:"relative", width:90, height:90, flexShrink:0 }}>
+                <svg width="90" height="90" style={{ transform:"rotate(-90deg)" }}>
+                  <circle cx="45" cy="45" r="38" fill="none" stroke={C.borderSoft} strokeWidth="8"/>
+                  <circle cx="45" cy="45" r="38" fill="none" stroke={scoreColor} strokeWidth="8"
+                    strokeDasharray={`${2*Math.PI*38}`}
+                    strokeDashoffset={`${2*Math.PI*38*(1-score/100)}`}
+                    strokeLinecap="round"/>
+                </svg>
+                <div style={{ position:"absolute", inset:0, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center" }}>
+                  <div style={{ fontSize:22, fontWeight:900, color:scoreColor }}>{score}</div>
+                  <div style={{ fontSize:9, color:C.muted, fontWeight:600 }}>/ 100</div>
+                </div>
+              </div>
+              <div style={{ flex:1 }}>
+                <div style={{ fontSize:11, color:C.muted, fontWeight:700, letterSpacing:1.5, marginBottom:4 }}>LIFE SCORE اليوم</div>
+                <div style={{ fontSize:20, fontWeight:900, color:scoreColor, marginBottom:8 }}>{scoreLabel}</div>
+                <div style={{ display:"flex", gap:6, flexWrap:"wrap" }}>
+                  {log.followedPlan && <span style={{ background:"#E6F5EE", border:"1px solid #A8D9BC", borderRadius:99, padding:"2px 8px", fontSize:10, color:C.green, fontWeight:700 }}>✓ خطة</span>}
+                  {log.exercise && <span style={{ background:"#EDE8F5", border:`1px solid ${C.lavender}`, borderRadius:99, padding:"2px 8px", fontSize:10, color:C.mauve, fontWeight:700 }}>✓ تمرين</span>}
+                  {!log.fastFood && <span style={{ background:"#E6F5EE", border:"1px solid #A8D9BC", borderRadius:99, padding:"2px 8px", fontSize:10, color:C.green, fontWeight:700 }}>✓ أكل نظيف</span>}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Streak + Rings */}
+          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:10, marginBottom:14 }}>
+            <div style={{ background:C.white, border:`1px solid ${C.border}`, borderRadius:16, padding:"14px 10px", textAlign:"center", boxShadow:`0 2px 10px ${C.shadow}` }}>
+              <div style={{ fontSize:24 }}>🔥</div>
+              <div style={{ fontSize:22, fontWeight:900, color:"#C8963E", marginTop:2 }}>{streak}</div>
+              <div style={{ fontSize:10, color:C.muted, fontWeight:600 }}>يوم متتالي</div>
+            </div>
+            <div style={{ background:C.white, border:`1px solid ${C.border}`, borderRadius:16, padding:"14px 10px", textAlign:"center", boxShadow:`0 2px 10px ${C.shadow}` }}>
+              <svg width="40" height="40" style={{ transform:"rotate(-90deg)", display:"block", margin:"0 auto" }}>
+                <circle cx="20" cy="20" r="16" fill="none" stroke={C.borderSoft} strokeWidth="5"/>
+                <circle cx="20" cy="20" r="16" fill="none" stroke="#7BACC4" strokeWidth="5"
+                  strokeDasharray={`${2*Math.PI*16}`} strokeDashoffset={`${2*Math.PI*16*(1-Math.min(parseFloat(log.water||0)/2,1))}`} strokeLinecap="round"/>
+              </svg>
+              <div style={{ fontSize:12, fontWeight:900, color:"#7BACC4", marginTop:2 }}>{log.water||0}L</div>
+              <div style={{ fontSize:10, color:C.muted, fontWeight:600 }}>ماء</div>
+            </div>
+            <div style={{ background:C.white, border:`1px solid ${C.border}`, borderRadius:16, padding:"14px 10px", textAlign:"center", boxShadow:`0 2px 10px ${C.shadow}` }}>
+              <svg width="40" height="40" style={{ transform:"rotate(-90deg)", display:"block", margin:"0 auto" }}>
+                <circle cx="20" cy="20" r="16" fill="none" stroke={C.borderSoft} strokeWidth="5"/>
+                <circle cx="20" cy="20" r="16" fill="none" stroke={C.mauve} strokeWidth="5"
+                  strokeDasharray={`${2*Math.PI*16}`} strokeDashoffset={`${2*Math.PI*16*(1-Math.min(parseFloat(log.sleep||0)/8,1))}`} strokeLinecap="round"/>
+              </svg>
+              <div style={{ fontSize:12, fontWeight:900, color:C.mauve, marginTop:2 }}>{log.sleep||0}h</div>
+              <div style={{ fontSize:10, color:C.muted, fontWeight:600 }}>نوم</div>
+            </div>
+          </div>
+
+          {/* Virtual Garden (Plant Nanny) */}
+          <div style={{ background:C.white, border:`1px solid ${C.border}`, borderRadius:20, padding:"16px 18px", marginBottom:14, boxShadow:`0 2px 10px ${C.shadow}`, textAlign:"center" }}>
+            <div style={{ fontSize:11, color:C.muted, fontWeight:700, letterSpacing:1.5, marginBottom:8 }}>حديقتك 🌿</div>
+            <div style={{ fontSize:52, marginBottom:6, filter:"drop-shadow(0 4px 8px rgba(0,0,0,0.1))" }}>{gardenStage}</div>
+            <div style={{ fontSize:13, fontWeight:700, color:C.sub }}>{gardenMsg}</div>
+            <div style={{ fontSize:11, color:C.muted, marginTop:4, fontWeight:500 }}>استمري في التسجيل لتنمو حديقتك! 🌱</div>
+          </div>
+
+          {/* Calendar Heatmap (HabitBull) */}
+          <div style={{ background:C.white, border:`1px solid ${C.border}`, borderRadius:20, padding:"16px 18px", marginBottom:14, boxShadow:`0 2px 10px ${C.shadow}` }}>
+            <div style={{ fontSize:11, color:C.muted, fontWeight:700, letterSpacing:1.5, marginBottom:10 }}>آخر 21 يوم 📅</div>
+            <div style={{ display:"flex", gap:4, flexWrap:"wrap" }}>
+              {calDays.map(d => {
+                const logged = logDates.includes(d);
+                const isToday = d === TODAY;
+                return (
+                  <div key={d} title={d} style={{ width:28, height:28, borderRadius:8, background:logged?C.green:C.borderSoft, border:isToday?`2px solid ${C.pink}`:"1px solid transparent", display:"flex", alignItems:"center", justifyContent:"center", fontSize:10, color:logged?"white":C.muted, fontWeight:700, transition:"all 0.2s" }}>
+                    {new Date(d).getDate()}
+                  </div>
+                );
+              })}
+            </div>
+            <div style={{ display:"flex", gap:12, marginTop:8 }}>
+              <div style={{ display:"flex", alignItems:"center", gap:4 }}><div style={{ width:12, height:12, borderRadius:3, background:C.green }}/><span style={{ fontSize:10, color:C.muted, fontWeight:600 }}>سجّلتِ</span></div>
+              <div style={{ display:"flex", alignItems:"center", gap:4 }}><div style={{ width:12, height:12, borderRadius:3, background:C.borderSoft }}/><span style={{ fontSize:10, color:C.muted, fontWeight:600 }}>لم تسجّلي</span></div>
+            </div>
+          </div>
+
+          {/* Badges (Fitbit style) */}
+          {earnedBadges.length > 0 && (
+            <div style={{ background:C.white, border:`1px solid ${C.border}`, borderRadius:20, padding:"16px 18px", marginBottom:14, boxShadow:`0 2px 10px ${C.shadow}` }}>
+              <div style={{ fontSize:11, color:C.muted, fontWeight:700, letterSpacing:1.5, marginBottom:10 }}>إنجازاتك 🏆</div>
+              <div style={{ display:"flex", gap:8, flexWrap:"wrap" }}>
+                {earnedBadges.map(b=>(
+                  <div key={b.id} style={{ background:`linear-gradient(135deg,${C.blush},#F5EBF8)`, border:`1px solid ${C.border}`, borderRadius:12, padding:"8px 12px", textAlign:"center", minWidth:70 }}>
+                    <div style={{ fontSize:24 }}>{b.emoji}</div>
+                    <div style={{ fontSize:10, fontWeight:800, color:C.pink, marginTop:2 }}>{b.title}</div>
+                    <div style={{ fontSize:9, color:C.muted, fontWeight:500, marginTop:1 }}>{b.desc}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Food Color System (Noom) */}
+          <div style={{ background:C.white, border:`1px solid ${C.border}`, borderRadius:20, padding:"16px 18px", marginBottom:14, boxShadow:`0 2px 10px ${C.shadow}` }}>
+            <div style={{ fontSize:11, color:C.muted, fontWeight:700, letterSpacing:1.5, marginBottom:10 }}>🎨 نظام الأكل الصحي</div>
+            <div style={{ display:"flex", gap:8 }}>
+              <div style={{ flex:1, background:"#E6F5EE", border:"1px solid #A8D9BC", borderRadius:12, padding:"10px 6px", textAlign:"center" }}>
+                <div style={{ fontSize:16 }}>🥦</div>
+                <div style={{ fontSize:10, fontWeight:800, color:C.green, marginTop:3 }}>أخضر</div>
+                <div style={{ fontSize:11, fontWeight:700, color:log.salad?C.green:C.muted, marginTop:3 }}>{log.salad?"✓":"—"}</div>
+              </div>
+              <div style={{ flex:1, background:"#FFF8E7", border:"1px solid #F0D9A0", borderRadius:12, padding:"10px 6px", textAlign:"center" }}>
+                <div style={{ fontSize:16 }}>🌾</div>
+                <div style={{ fontSize:10, fontWeight:800, color:"#C8963E", marginTop:3 }}>أصفر</div>
+                <div style={{ fontSize:11, fontWeight:700, color:log.meals?"#C8963E":C.muted, marginTop:3 }}>{log.meals?"✓":"—"}</div>
+              </div>
+              <div style={{ flex:1, background:"#FFF0F3", border:`1px solid ${C.red}40`, borderRadius:12, padding:"10px 6px", textAlign:"center" }}>
+                <div style={{ fontSize:16 }}>🍔</div>
+                <div style={{ fontSize:10, fontWeight:800, color:C.red, marginTop:3 }}>أحمر</div>
+                <div style={{ fontSize:11, fontWeight:700, color:log.fastFood?C.red:C.green, marginTop:3 }}>{log.fastFood?"⚠️":"✓"}</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Measurements */}
+          {(log.weight||log.waist||log.hips||log.arm) && (
+            <div style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: 20, padding: "16px 18px", marginBottom:14, boxShadow:`0 2px 10px ${C.shadow}` }}>
+              <div style={{ fontSize:11, color:C.muted, fontWeight:700, letterSpacing:1.5, marginBottom:10 }}>القياسات ⚖️</div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                {log.weight && <SChip label="الوزن"   value={`${log.weight} kg`} color={C.pink} />}
+                {log.waist  && <SChip label="الوسط"   value={`${log.waist} cm`}  color={C.mauve} />}
+                {log.hips   && <SChip label="الأرداف" value={`${log.hips} cm`}   color={C.lavender} />}
+                {log.arm    && <SChip label="الذراع"  value={`${log.arm} cm`}    color={C.rose} />}
+              </div>
+            </div>
+          )}
+
+          {alreadyLogged && !submitted && (
+            <button style={S.outlineBtn} onClick={() => { setAlreadyLogged(false); setStep(0); }}>✏️ تعديل تسجيل اليوم</button>
+          )}
         </div>
       </div>
     );
