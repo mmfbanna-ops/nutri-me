@@ -1,4 +1,35 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
+
+// ── SUPABASE ──
+const SB_URL = "https://uqykrqxqtogecakrjpys.supabase.co";
+const SB_KEY = "sb_publishable_BI2j4NL9-jVdZm0fpQ5wnA_qDMLWsHi";
+const sbH = { "apikey": SB_KEY, "Authorization": "Bearer "+SB_KEY, "Content-Type": "application/json", "Prefer": "resolution=merge-duplicates,return=minimal" };
+
+async function sbGet(table, filters) {
+  try {
+    const r = await fetch(SB_URL+"/rest/v1/"+table+"?"+(filters||""), { headers: { "apikey": SB_KEY, "Authorization": "Bearer "+SB_KEY } });
+    if (!r.ok) return null;
+    return await r.json();
+  } catch { return null; }
+}
+async function sbUpsert(table, data) {
+  try {
+    const r = await fetch(SB_URL+"/rest/v1/"+table, { method:"POST", headers:sbH, body:JSON.stringify(data) });
+    if (!r.ok) { console.error("sbUpsert", table, await r.text()); return false; }
+    return true;
+  } catch(e) { console.error("sbUpsert", e); return false; }
+}
+async function sbUpdate(table, data, filters) {
+  try {
+    const r = await fetch(SB_URL+"/rest/v1/"+table+"?"+filters, { method:"PATCH", headers:sbH, body:JSON.stringify(data) });
+    return r.ok;
+  } catch { return false; }
+}
+async function sbDelete(table, filters) {
+  try {
+    await fetch(SB_URL+"/rest/v1/"+table+"?"+filters, { method:"DELETE", headers:sbH });
+  } catch {}
+}
 
 // ── FONT ──
 const FONT = `@import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap');
@@ -67,19 +98,13 @@ function genHistory(name) {
   return days;
 }
 
-// ── memStore shared between doctor + client ──
-const memStore = {};
-const storage = {
-  get:(k)=>{ const v=memStore[k]; return v?{value:v}:null; },
-  set:(k,v)=>{ memStore[k]=v; return true; },
-};
-
 const DAYS_AR = ["الأحد","الاثنين","الثلاثاء","الأربعاء","الخميس","الجمعة","السبت"];
 
 const INIT_CLIENTS = [
   { name:"Soso",   code:"1234", plan:1, startDate:"2026-03-09", sessionDay:0 },
   { name:"Israa",  code:"1350", plan:1, startDate:"2026-03-09", sessionDay:0 },
   { name:"Mariam", code:"8889", plan:1, startDate:"2026-03-09", sessionDay:0 },
+  { name:"Noren",  code:"1351", plan:1, startDate:"2026-03-12", sessionDay:0 },
 ];
 
 function getNextSessionDate(sessionDay) {
@@ -93,53 +118,84 @@ function getNextSessionDate(sessionDay) {
 }
 
 export default function Dashboard() {
-  const [view, setView]           = useState("overview"); // overview | client | addClient
+  const [view, setView]           = useState("overview");
   const [selected, setSelected]   = useState(null);
   const [histRange, setHistRange] = useState("week");
   const [clients, setClients]     = useState(INIT_CLIENTS);
   const [editing, setEditing]     = useState(null);
-  const [allData]                 = useState(()=>Object.fromEntries(INIT_CLIENTS.map(c=>[c.name,genHistory(c.name)])));
-  const [msgModal, setMsgModal]   = useState(null); // client name
+  const [saving, setSaving]       = useState(false);
+  const [allData, setAllData]     = useState(()=>Object.fromEntries(INIT_CLIENTS.map(c=>[c.name,genHistory(c.name)])));
+  const [msgModal, setMsgModal]   = useState(null);
   const [msgText, setMsgText]     = useState("");
   const [msgSent, setMsgSent]     = useState(false);
   const [logoSrc, setLogoSrc]     = useState(null);
 
-  // Add client form state
   const [newName,  setNewName]  = useState("");
   const [newCode,  setNewCode]  = useState("");
   const [newPlan,  setNewPlan]  = useState(1);
   const [newStart, setNewStart] = useState(TODAY);
+  const loadedRef = useRef(false);
+
+  useEffect(()=>{
+    if (loadedRef.current) return;
+    loadedRef.current = true;
+    async function loadClients() {
+      const rows = await sbGet("clients", "select=name,code,plan,start_date,session_day&order=id");
+      if (rows && rows.length > 0) {
+        const mapped = rows.map(r=>({ name:r.name, code:r.code, plan:r.plan, startDate:r.start_date, sessionDay:r.session_day||0 }));
+        setClients(mapped);
+        setAllData(Object.fromEntries(mapped.map(c=>[c.name,genHistory(c.name)])));
+      }
+    }
+    loadClients();
+  },[]);
 
   const clientObj = selected ? clients.find(c=>c.name===selected.name) : null;
 
-  function saveClients(updated) { setClients(updated); }
-
-  function addClient() {
+  async function addClient() {
     if (!newName.trim() || newCode.length !== 4) return;
-    const c = { name:newName.trim(), code:newCode, plan:newPlan, startDate:newStart };
-    saveClients([...clients, c]);
-    allData[c.name] = [];
+    const c = { name:newName.trim(), code:newCode, plan:parseInt(newPlan), startDate:newStart, sessionDay:0 };
+    // Update UI immediately
+    setClients(p=>[...p, c]);
+    setAllData(p=>({...p, [c.name]:[]}));
     setNewName(""); setNewCode(""); setNewPlan(1); setNewStart(TODAY);
     setView("overview");
+    // Sync to Supabase in background
+    sbUpsert("clients", { name:c.name, code:c.code, plan:c.plan, start_date:c.startDate, session_day:0 });
   }
 
-  function deleteClient(name) {
-    saveClients(clients.filter(c=>c.name!==name));
-    if (selected?.name===name) { setSelected(null); setView("overview"); }
+  async function deleteClient(name) {
+    // Update UI immediately
+    setClients(p=>p.filter(c=>c.name!==name));
+    if (selected && selected.name===name) { setSelected(null); setView("overview"); }
+    // Sync to Supabase in background
+    sbDelete("clients", "name=eq."+name);
   }
 
-  function saveEdit(u) {
+  async function saveEdit(u) {
+    setSaving(true);
+    // Update UI immediately
     setClients(p=>p.map(c=>c.name===u.name?u:c));
+    if (selected && selected.name===u.name) setSelected(u);
+    // Save to Supabase and wait for confirmation
+    const ok = await sbUpdate("clients", { code:u.code, plan:parseInt(u.plan), start_date:u.startDate, session_day:u.sessionDay||0 }, "name=eq."+u.name);
+    if (!ok) {
+      // Retry once after a short delay
+      await new Promise(r=>setTimeout(r,1000));
+      await sbUpdate("clients", { code:u.code, plan:parseInt(u.plan), start_date:u.startDate, session_day:u.sessionDay||0 }, "name=eq."+u.name);
+    }
+    setSaving(false);
     setEditing(null);
-    if (selected?.name===u.name) setSelected(u);
   }
 
-  function sendMsg(clientName, text) {
+  async function sendMsg(clientName, text) {
     if (!text.trim()) return;
-    const key = `msg:${clientName}:${TODAY}`;
-    storage.set(key, JSON.stringify({ text, from:"Dr. Mai", date:TODAY, sentAt:new Date().toISOString() }));
+    const t = new Date().toLocaleTimeString("ar-EG",{hour:"2-digit",minute:"2-digit"});
+    // Update UI immediately
     setMsgModal(null); setMsgText(""); setMsgSent(true);
     setTimeout(()=>setMsgSent(false), 3000);
+    // Sync to Supabase in background
+    sbUpsert("messages", { client_name:clientName, role:"doctor", text:text, time:t });
   }
 
   function handleLogoUpload(e) {
@@ -252,7 +308,7 @@ export default function Dashboard() {
             <Lbl>تاريخ البداية</Lbl>
             <input type="date" value={editing.startDate} onChange={e=>setEditing(ec=>({...ec,startDate:e.target.value}))}
               style={{ background:C.bg, border:`1.5px solid ${C.border}`, borderRadius:10, padding:"10px 14px", color:C.text, fontSize:14, fontWeight:600, width:"100%", outline:"none", marginBottom:16, boxSizing:"border-box" }} />
-            <Lbl>يوم السيشن الأسبوعي 📅</Lbl>
+            <Lbl>يوم الموعد الأسبوعي 📅</Lbl>
             <div style={{ display:"flex", gap:6, flexWrap:"wrap", marginBottom:24 }}>
               {DAYS_AR.map((d,i)=>(
                 <button key={i} onClick={()=>setEditing(ec=>({...ec,sessionDay:i}))}
@@ -263,7 +319,7 @@ export default function Dashboard() {
             </div>
             <div style={{ display:"flex", gap:10 }}>
               <button onClick={()=>setEditing(null)} style={{ flex:1, padding:"11px 0", borderRadius:12, background:C.bg, border:`1.5px solid ${C.border}`, color:C.muted, cursor:"pointer", fontSize:14, fontWeight:700 }}>إلغاء</button>
-              <button onClick={()=>saveEdit(editing)} style={{ flex:2, padding:"11px 0", borderRadius:12, background:`linear-gradient(135deg,${C.pink},${C.mauve})`, border:"none", color:C.white, cursor:"pointer", fontSize:14, fontWeight:800, boxShadow:`0 4px 16px ${C.shadow}` }}>✓ حفظ</button>
+              <button onClick={()=>saveEdit(editing)} disabled={saving} style={{ flex:2, padding:"11px 0", borderRadius:12, background:saving?C.muted:`linear-gradient(135deg,${C.pink},${C.mauve})`, border:"none", color:C.white, cursor:saving?"not-allowed":"pointer", fontSize:14, fontWeight:800, boxShadow:saving?"none":`0 4px 16px ${C.shadow}`, opacity:saving?0.7:1 }}>{saving?"⏳ جاري الحفظ...":"✓ حفظ"}</button>
             </div>
           </div>
         </div>
@@ -387,7 +443,9 @@ function Overview({ clients, data, onSelect, onMsg }) {
               const todayLog = history.find(d=>d.date===TODAY);
               const last7 = history.slice(0,7);
               const compliance = Math.round((last7.filter(d=>d.followedPlan).length/Math.max(last7.length,1))*100);
-              const hasMsg = !!storage.get(`msg:${client.name}:${TODAY}`);
+              const hasMsg = false; // will be shown in detail view
+              const clientReferrals = 0;
+              const hasClientMsg = false;
 
               return (
                 <div key={client.name} style={{ background:C.white, border:`1.5px solid ${si.isExpired?C.red+"60":C.border}`, borderRadius:18, padding:"18px 18px", boxShadow:`0 3px 16px ${C.shadow}`, transition:"all 0.2s" }} className="card-hover">
@@ -399,6 +457,8 @@ function Overview({ clients, data, onSelect, onMsg }) {
                         🔑 {client.code}
                       </span>
                       {hasMsg && <span style={{ background:"#F5EBF8", border:`1px solid ${C.lavender}`, borderRadius:8, padding:"3px 8px", fontSize:11, color:C.mauve, fontWeight:700 }}>💬 رسالة</span>}
+                      {hasClientMsg && <span style={{ background:"#FFF0F4", border:`1px solid ${C.rose}50`, borderRadius:8, padding:"3px 8px", fontSize:11, color:C.rose, fontWeight:700 }}>💌 سؤال</span>}
+                      {clientReferrals > 0 && <span style={{ background:"#FFF8E7", border:"1px solid #F0D9A0", borderRadius:8, padding:"3px 8px", fontSize:11, color:"#A07030", fontWeight:700 }}>🎁 {clientReferrals} دعوة</span>}
                     </div>
                     <div style={{ textAlign:"right" }}>
                       <div style={{ fontSize:16, fontWeight:800, color:C.text }}>{client.name}</div>
@@ -445,8 +505,73 @@ function ClientDetail({ client, data, range, setRange, onMsg }) {
   const { weeksDone, weeksLeft, followupsDone, followupsLeft, followupsTotal, isExpired, progressPct, remaining, totalDays, elapsed } = si;
   const days = range==="week"?data.slice(0,7):data.slice(0,30);
   const today = data.find(d=>d.date===TODAY);
-  const savedMsg = storage.get(`msg:${client.name}:${TODAY}`);
-  const todayMsg = savedMsg ? JSON.parse(savedMsg.value) : null;
+  const [todayMsg, setTodayMsg] = useState(null);
+  const [measHistory, setMeasHistory] = useState([]);
+  const [chartMetric, setChartMetric] = useState("weight");
+  const [realToday, setRealToday] = useState(null);
+
+  useEffect(()=>{
+    async function loadRealData() {
+      // Load today's real log
+      try {
+        const logs = await sbGet("daily_logs", "client_name=eq."+client.name+"&date=eq."+TODAY+"&select=data");
+        if (logs && logs.length > 0 && logs[0].data) setRealToday(logs[0].data);
+      } catch {}
+      // Load recent doctor message
+      try {
+        const msgs = await sbGet("messages", "client_name=eq."+client.name+"&role=eq.doctor&order=created_at.desc&limit=1&select=text,time");
+        if (msgs && msgs.length > 0) setTodayMsg(msgs[0]);
+      } catch {}
+      // Load measurements history
+      try {
+        const allLogs = await sbGet("daily_logs", "client_name=eq."+client.name+"&select=date,data&order=date.asc");
+        if (allLogs && allLogs.length > 0) {
+          const hist = allLogs.filter(r=>r.data&&(r.data.weight||r.data.waist||r.data.hips||r.data.bodyFat))
+            .map(r=>({ date:r.date, weight:parseFloat(r.data.weight)||null, waist:parseFloat(r.data.waist)||null, hips:parseFloat(r.data.hips)||null, bodyFat:parseFloat(r.data.bodyFat)||null }));
+          setMeasHistory(hist);
+          return;
+        }
+      } catch {}
+      // Fallback to generated data
+      const hist = [];
+      data.forEach(d => { if (d.weight) hist.push({ date:d.date, weight:d.weight, waist:d.waist||null, hips:d.hips||null, bodyFat:d.bodyFat||null }); });
+      hist.sort((a,b)=>a.date.localeCompare(b.date));
+      setMeasHistory(hist);
+    }
+    loadRealData();
+  },[client.name]);
+
+  const effectiveToday = realToday || today;
+  const chartPoints = measHistory.filter(d=>d[chartMetric]).slice(-10);
+  const vals = chartPoints.map(d=>d[chartMetric]);
+  const minV = vals.length ? Math.min(...vals)*0.97 : 0;
+  const maxV = vals.length ? Math.max(...vals)*1.03 : 100;
+  const W=300, H=90;
+  const px = i => vals.length<2 ? W/2 : (i/(vals.length-1))*(W-24)+12;
+  const py = v => H - ((v-minV)/(maxV-minV||1))*(H-20)-10;
+  const pathD = vals.map((v,i)=>`${i===0?"M":"L"}${px(i).toFixed(1)},${py(v).toFixed(1)}`).join(" ");
+  const areaD = vals.length>1 ? `${pathD} L${px(vals.length-1).toFixed(1)},${H} L${px(0).toFixed(1)},${H} Z` : "";
+  const trend = vals.length>=2 ? vals[vals.length-1]-vals[0] : null;
+  const metricsMeta = { weight:{label:"الوزن",color:C.pink,unit:"kg"}, waist:{label:"الوسط",color:C.mauve,unit:"cm"}, hips:{label:"الأرداف",color:C.lavender,unit:"cm"}, bodyFat:{label:"الدهون",color:"#C8963E",unit:"%"} };
+  const active = metricsMeta[chartMetric];
+
+  // Client messages loaded via Supabase in useEffect above
+  const [clientMsgs, setClientMsgs] = useState([]);
+  const [todaySymptoms, setTodaySymptoms] = useState(null);
+
+  useEffect(()=>{
+    async function loadMsgsAndSymptoms() {
+      try {
+        const msgs = await sbGet("messages", "client_name=eq."+client.name+"&role=eq.user&order=created_at.desc&select=text,time,created_at");
+        if (msgs && msgs.length > 0) setClientMsgs(msgs);
+      } catch {}
+      try {
+        const syms = await sbGet("hormone_symptoms", "client_name=eq."+client.name+"&date=eq."+TODAY+"&select=data");
+        if (syms && syms.length > 0 && syms[0].data) setTodaySymptoms(syms[0].data);
+      } catch {}
+    }
+    loadMsgsAndSymptoms();
+  },[client.name]);
 
   const milestones = Array.from({length:Math.floor(totalDays/7)},(_,i)=>({
     weekNum:i+1, done:weeksDone>=i+1, current:weeksDone+1===i+1
@@ -469,6 +594,21 @@ function ClientDetail({ client, data, range, setRange, onMsg }) {
         <button onClick={onMsg} style={{ width:"100%", background:"#F5EBF8", border:`1.5px dashed ${C.lavender}`, borderRadius:14, padding:"12px 18px", marginBottom:16, color:C.mauve, fontSize:14, fontWeight:700, cursor:"pointer", textAlign:"center" }}>
           💬 أرسلي رسالة تحفيز لـ {client.name} اليوم
         </button>
+      )}
+
+      {/* Client messages to doctor */}
+      {clientMsgs.length > 0 && (
+        <div style={{ background:C.white, border:`1.5px solid ${C.pink}40`, borderRadius:16, padding:"14px 18px", marginBottom:16, boxShadow:`0 2px 12px ${C.shadow}` }}>
+          <div style={{ fontSize:12, color:C.pink, fontWeight:800, marginBottom:10 }}>💌 رسائل {client.name} للدكتورة</div>
+          <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+            {clientMsgs.map((m,i)=>(
+              <div key={i} style={{ background:C.bg, border:`1px solid ${C.border}`, borderRadius:12, padding:"10px 14px" }}>
+                <div style={{ fontSize:11, color:C.muted, fontWeight:600, marginBottom:4 }}>{m.date} · {new Date(m.sentAt).toLocaleTimeString("ar-EG",{hour:"2-digit",minute:"2-digit"})}</div>
+                <div style={{ fontSize:13, color:C.text, fontWeight:600, lineHeight:1.7 }}>{m.text}</div>
+              </div>
+            ))}
+          </div>
+        </div>
       )}
 
       {/* Subscription */}
@@ -511,37 +651,134 @@ function ClientDetail({ client, data, range, setRange, onMsg }) {
         <div style={{ background:C.greenLight, border:`1px solid ${C.greenBorder}`, borderRadius:12, padding:"10px 14px", display:"flex", gap:10, alignItems:"center", marginTop:10 }}>
           <span style={{ fontSize:18 }}>🗓️</span>
           <div>
-            <div style={{ fontSize:12, color:C.green, fontWeight:800 }}>يوم السيشن: {DAYS_AR[client.sessionDay??0]}</div>
-            <div style={{ fontSize:11, color:C.sub, fontWeight:500 }}>السيشن القادم: {getNextSessionDate(client.sessionDay??0)}</div>
+            <div style={{ fontSize:12, color:C.green, fontWeight:800 }}>يوم الموعد: {DAYS_AR[client.sessionDay??0]}</div>
+            <div style={{ fontSize:11, color:C.sub, fontWeight:500 }}>الموعد القادم: {getNextSessionDate(client.sessionDay??0)}</div>
           </div>
         </div>
       </div>
 
       {/* Today */}
-      {today ? (
+      {effectiveToday ? (
         <div style={{ background:C.white, border:`1.5px solid ${C.border}`, borderRadius:20, padding:18, marginBottom:16, boxShadow:`0 4px 16px ${C.shadow}` }}>
           <div style={{ fontSize:12, color:C.muted, textTransform:"uppercase", letterSpacing:2, marginBottom:14, fontWeight:700 }}>ملخص اليوم</div>
           <div style={{ display:"grid", gridTemplateColumns:"repeat(2,1fr)", gap:10, marginBottom:14 }}>
-            {today.weight && <BigChip label="الوزن" value={`${today.weight} kg`} color={C.pink} />}
-            <BigChip label="الماء" value={`${today.water} L`} color={C.mauve} />
-            <BigChip label="النوم" value={`${today.sleep} ساعة`} color={C.lavender} />
-            <BigChip label="التوتر" value={`${today.stress}/10`} color={today.stress>7?C.red:C.muted} />
+            {effectiveToday?.weight && <BigChip label="الوزن" value={`${effectiveToday?.weight} kg`} color={C.pink} />}
+            <BigChip label="الماء" value={`${effectiveToday?.water} L`} color={C.mauve} />
+            <BigChip label="النوم" value={`${effectiveToday?.sleep} ساعة`} color={C.lavender} />
+            <BigChip label="التوتر" value={`${effectiveToday?.stress}/10`} color={effectiveToday?.stress>7?C.red:C.muted} />
           </div>
           <div style={{ display:"flex", gap:6, flexWrap:"wrap" }}>
-            <Tag text={today.followedPlan?"✓ التزمت":"✗ لم تلتزم"} color={today.followedPlan?C.green:C.red} />
-            {today.exercise && <Tag text={`🏃 ${today.exerciseMin}د`} color={C.mauve} />}
-            {today.salad && <Tag text="🥗 سلطة" color={C.green} />}
-            {today.fastFood && <Tag text="🍔 fast food" color={C.red} />}
-            {today.binge && <Tag text="⚠️ binge" color={C.red} />}
-            <Tag text={today.mood} color={C.rose} />
+            <Tag text={effectiveToday?.followedPlan?"✓ التزمت":"✗ لم تلتزم"} color={effectiveToday?.followedPlan?C.green:C.red} />
+            {effectiveToday?.exercise && <Tag text={`🏃 ${effectiveToday?.exerciseMin}د`} color={C.mauve} />}
+            {effectiveToday?.salad && <Tag text="🥗 سلطة" color={C.green} />}
+            {effectiveToday?.fastFood && <Tag text="🍔 fast food" color={C.red} />}
+            {effectiveToday?.binge && <Tag text="⚠️ binge" color={C.red} />}
+            <Tag text={effectiveToday?.mood} color={C.rose} />
           </div>
-          {today.note && <div style={{ marginTop:12, fontSize:12, color:C.sub, fontStyle:"italic", borderRight:`3px solid ${C.rose}`, paddingRight:10, textAlign:"right", fontWeight:500 }}>"{today.note}"</div>}
+          {/* Period info */}
+          {effectiveToday?.period !== null && effectiveToday?.period !== undefined && (
+            <div style={{ marginTop:12, background:effectiveToday?.period?"#FFF0F4":"#F5FBF7", border:`1px solid ${effectiveToday?.period?C.rose+"50":"#A8D9BC"}`, borderRadius:12, padding:"10px 14px" }}>
+              <div style={{ fontSize:12, fontWeight:800, color:effectiveToday?.period?C.rose:C.green, marginBottom:effectiveToday?.period?6:0 }}>
+                🩸 الدورة الشهرية: {effectiveToday?.period?"موجودة":"غير موجودة"}
+              </div>
+              {effectiveToday?.period && (
+                <div style={{ display:"flex", gap:6, flexWrap:"wrap", marginTop:4 }}>
+                  {effectiveToday?.periodPain && <span style={{ background:"#FDE0EA", border:`1px solid ${C.rose}40`, borderRadius:99, padding:"2px 8px", fontSize:11, color:C.rose, fontWeight:700 }}>ألم 😣</span>}
+                  {effectiveToday?.periodBloat && <span style={{ background:"#FDE0EA", border:`1px solid ${C.rose}40`, borderRadius:99, padding:"2px 8px", fontSize:11, color:C.rose, fontWeight:700 }}>انتفاخ</span>}
+                  {effectiveToday?.periodMood && <span style={{ background:"#FDE0EA", border:`1px solid ${C.rose}40`, borderRadius:99, padding:"2px 8px", fontSize:11, color:C.rose, fontWeight:700 }}>مزاج 😤</span>}
+                  {effectiveToday?.periodCraving && <span style={{ background:"#FDE0EA", border:`1px solid ${C.rose}40`, borderRadius:99, padding:"2px 8px", fontSize:11, color:C.rose, fontWeight:700 }}>شهية 🍫</span>}
+                  {effectiveToday?.periodFatigue && <span style={{ background:"#FDE0EA", border:`1px solid ${C.rose}40`, borderRadius:99, padding:"2px 8px", fontSize:11, color:C.rose, fontWeight:700 }}>إرهاق 😴</span>}
+                  {effectiveToday?.periodHeadache && <span style={{ background:"#FDE0EA", border:`1px solid ${C.rose}40`, borderRadius:99, padding:"2px 8px", fontSize:11, color:C.rose, fontWeight:700 }}>صداع 🤕</span>}
+                  {effectiveToday?.periodBack && <span style={{ background:"#FDE0EA", border:`1px solid ${C.rose}40`, borderRadius:99, padding:"2px 8px", fontSize:11, color:C.rose, fontWeight:700 }}>ألم ظهر 💢</span>}
+                  {effectiveToday?.periodNausea && <span style={{ background:"#FDE0EA", border:`1px solid ${C.rose}40`, borderRadius:99, padding:"2px 8px", fontSize:11, color:C.rose, fontWeight:700 }}>غثيان 🤢</span>}
+                  {effectiveToday?.periodPainLevel > 0 && <span style={{ background:"#FDE0EA", border:`1px solid ${C.rose}40`, borderRadius:99, padding:"2px 8px", fontSize:11, color:C.rose, fontWeight:700 }}>شدة: {effectiveToday?.periodPainLevel}/10</span>}
+                </div>
+              )}
+            </div>
+          )}
+          {effectiveToday?.note && <div style={{ marginTop:12, fontSize:12, color:C.sub, fontStyle:"italic", borderRight:`3px solid ${C.rose}`, paddingRight:10, textAlign:"right", fontWeight:500 }}>"{effectiveToday?.note}"</div>}
+
+          {/* Hormone symptoms from cycle tracker */}
+          {(()=>{
+            const h = effectiveToday?Symptoms;
+            if (!h || !Object.keys(h).length) return null;
+            const ENERGY_ICONS = ["😴","😑","🙂","⚡","🔥"];
+            const MOOD_ICONS   = ["😢","😤","😐","😊","🥰"];
+            const FOCUS_ICONS  = ["🌫️","😵","🤔","💡","🎯"];
+            return (
+              <div style={{ marginTop:12, background:"#F5EBF8", border:`1px solid ${C.lavender}`, borderRadius:12, padding:"10px 14px" }}>
+                <div style={{ fontSize:11, color:C.mauve, fontWeight:800, marginBottom:8 }}>🧬 أعراض هرمونية اليوم</div>
+                <div style={{ display:"flex", gap:8, flexWrap:"wrap" }}>
+                  {h.hEnergy && <span style={{ fontSize:13 }}>{ENERGY_ICONS[(h.hEnergy||3)-1]} طاقة</span>}
+                  {h.hMood   && <span style={{ fontSize:13 }}>{MOOD_ICONS[(h.hMood||3)-1]} مزاج</span>}
+                  {h.hFocus  && <span style={{ fontSize:13 }}>{FOCUS_ICONS[(h.hFocus||3)-1]} تركيز</span>}
+                  {h.hBloating  && <span style={{ background:"#FDE0EA", border:`1px solid ${C.rose}40`, borderRadius:99, padding:"2px 8px", fontSize:10, color:C.rose, fontWeight:700 }}>🫃 انتفاخ</span>}
+                  {h.hCramps    && <span style={{ background:"#FDE0EA", border:`1px solid ${C.rose}40`, borderRadius:99, padding:"2px 8px", fontSize:10, color:C.rose, fontWeight:700 }}>😣 تشنجات</span>}
+                  {h.hHeadache  && <span style={{ background:"#FDE0EA", border:`1px solid ${C.rose}40`, borderRadius:99, padding:"2px 8px", fontSize:10, color:C.rose, fontWeight:700 }}>🤕 صداع</span>}
+                  {h.hCraving   && <span style={{ background:"#FFF8E7", border:"1px solid #F0D9A0", borderRadius:99, padding:"2px 8px", fontSize:10, color:"#C8963E", fontWeight:700 }}>🍫 رغبة سكر</span>}
+                  {h.hSkinGlow  && <span style={{ background:"#E6F5EE", border:"1px solid #A8D9BC", borderRadius:99, padding:"2px 8px", fontSize:10, color:"#5DAD85", fontWeight:700 }}>✨ بشرة مشرقة</span>}
+                  {h.hInsomnia  && <span style={{ background:"#EDE8F5", border:`1px solid ${C.lavender}`, borderRadius:99, padding:"2px 8px", fontSize:10, color:C.mauve, fontWeight:700 }}>🌙 صعوبة نوم</span>}
+                </div>
+              </div>
+            );
+          })()}
         </div>
       ) : (
         <div style={{ background:C.redLight, border:`1px solid ${C.red}40`, borderRadius:14, padding:"14px 18px", marginBottom:16 }}>
           <div style={{ fontSize:13, fontWeight:800, color:C.red }}>⚠️ لم تسجل اليوم</div>
         </div>
       )}
+
+      {/* Measurements Progress Chart */}
+      <div style={{ background:C.white, border:`1px solid ${C.border}`, borderRadius:20, padding:"18px 18px", marginBottom:16, boxShadow:`0 4px 16px ${C.shadow}` }}>
+        <div style={{ fontSize:12, color:C.muted, fontWeight:700, letterSpacing:1.5, marginBottom:12 }}>تطور القياسات 📈</div>
+        <div style={{ display:"flex", gap:6, flexWrap:"wrap", marginBottom:14 }}>
+          {Object.entries(metricsMeta).map(([k,m])=>(
+            <button key={k} onClick={()=>setChartMetric(k)}
+              style={{ padding:"5px 12px", borderRadius:99, fontSize:11, fontWeight:800, cursor:"pointer", border:`1.5px solid ${chartMetric===k?m.color:C.border}`, background:chartMetric===k?m.color+"18":C.bg, color:chartMetric===k?m.color:C.muted, transition:"all 0.2s" }}>
+              {m.label}
+            </button>
+          ))}
+        </div>
+        {chartPoints.length >= 2 ? (
+          <>
+            <svg width="100%" viewBox={`0 0 ${W} ${H+14}`} style={{ overflow:"visible", display:"block" }}>
+              <defs>
+                <linearGradient id="docGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor={active.color} stopOpacity="0.22"/>
+                  <stop offset="100%" stopColor={active.color} stopOpacity="0.02"/>
+                </linearGradient>
+              </defs>
+              {areaD && <path d={areaD} fill="url(#docGrad)"/>}
+              <path d={pathD} fill="none" stroke={active.color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+              {vals.map((v,i)=>(
+                <g key={i}>
+                  <circle cx={px(i)} cy={py(v)} r="4" fill={active.color} stroke="white" strokeWidth="2"/>
+                  <text x={px(i)} y={py(v)-10} textAnchor="middle" fontSize="9" fill={active.color} fontWeight="700">{v}</text>
+                </g>
+              ))}
+            </svg>
+            <div style={{ display:"flex", justifyContent:"space-between", marginBottom:10 }}>
+              {chartPoints.map((d,i)=>(
+                <span key={i} style={{ fontSize:9, color:C.muted, fontWeight:600 }}>{new Date(d.date).getDate()}/{new Date(d.date).getMonth()+1}</span>
+              ))}
+            </div>
+            {trend !== null && (
+              <div style={{ display:"flex", alignItems:"center", gap:8, padding:"8px 12px", background:(trend<0?C.green:trend>0?C.red:C.muted)+"15", borderRadius:10 }}>
+                <span style={{ fontSize:14 }}>{trend<0?"📉":trend>0?"📈":"➡️"}</span>
+                <span style={{ fontSize:12, fontWeight:800, color:trend<0?C.green:trend>0?C.red:C.muted }}>
+                  {trend<0?`تحسن ${Math.abs(trend).toFixed(1)}${active.unit}`:trend>0?`زيادة ${trend.toFixed(1)}${active.unit}`:"ثابت"}
+                </span>
+                <span style={{ fontSize:11, color:C.muted }}>منذ أول قياس</span>
+              </div>
+            )}
+          </>
+        ) : (
+          <div style={{ background:C.bg, borderRadius:12, padding:14, textAlign:"center" }}>
+            <div style={{ fontSize:13, color:C.muted, fontWeight:600 }}>بعد تسجيلين أسبوعيين هيظهر الجراف 📊</div>
+          </div>
+        )}
+      </div>
 
       {/* Range + history */}
       <div style={{ display:"flex", gap:8, marginBottom:16 }}>
@@ -562,7 +799,8 @@ function ClientDetail({ client, data, range, setRange, onMsg }) {
               </span>
             </div>
             <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:6, marginBottom:10 }}>
-              {d.weight && <SmChip label="وزن" value={`${d.weight}`} color={C.pink} />}
+              {d.weight && <SmChip label="وزن" value={`${d.weight}kg`} color={C.pink} />}
+              {d.bodyFat && <SmChip label="دهون" value={`${d.bodyFat}%`} color="#C8963E" />}
               <SmChip label="ماء" value={`${d.water}L`} color={C.mauve} />
               <SmChip label="نوم" value={`${d.sleep}h`} color={C.lavender} />
               <SmChip label="توتر" value={`${d.stress}/10`} color={d.stress>7?C.red:C.muted} />
@@ -577,6 +815,20 @@ function ClientDetail({ client, data, range, setRange, onMsg }) {
           </div>
         ))}
       </div>
+
+      {/* Messages from client */}
+      {clientMsgs.length > 0 ? (
+        <div style={{ background:"linear-gradient(135deg,#FFF8E7,#FDF5EC)", border:"1.5px solid #F0D9A0", borderRadius:20, padding:"18px 18px", marginTop:16, boxShadow:"0 2px 12px rgba(200,150,62,0.12)" }}>
+          <div style={{ fontSize:12, color:"#A07030", fontWeight:800, letterSpacing:1.5, marginBottom:12 }}>💬 رسائل العميلة</div>
+          <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+            {clientMsgs.slice(0,5).map((m,i)=>(
+              <div key={i} style={{ background:"#FFFAF0", border:"1px solid #F0D9A0", borderRadius:10, padding:"8px 12px", fontSize:12, color:"#7A5020", fontWeight:600 }}>
+                <span style={{ color:"#B08040", fontSize:11 }}>{m.time} · </span>{m.text}
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
     </>
   );
 }
@@ -612,3 +864,12 @@ function Tag({text,color,small}) {
   return <span style={{ background:`${color}15`, border:`1px solid ${color}40`, borderRadius:99, padding:small?"3px 8px":"5px 12px", fontSize:small?11:12, color, fontWeight:700 }}>{text}</span>;
 }
 const INP = { background:C.bg, border:`1.5px solid ${C.border}`, borderRadius:10, padding:"11px 14px", color:C.text, fontSize:15, fontWeight:600, outline:"none", width:"100%", marginBottom:16, boxSizing:"border-box" };
+
+function Field({label,type="text",placeholder,value,onChange}) {
+  return (
+    <div style={{ marginBottom:14 }}>
+      {label && <label style={{ fontSize:12, color:C.sub, display:"block", marginBottom:6, fontWeight:700 }}>{label}</label>}
+      <input type={type} placeholder={placeholder} value={value||""} onChange={onChange} style={INP}/>
+    </div>
+  );
+}
