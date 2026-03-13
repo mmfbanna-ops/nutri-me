@@ -225,10 +225,10 @@ export default function Dashboard() {
 
         <div style={{ flex:1 }}>
           <h1 style={{ fontSize:17, fontWeight:900, color:C.text, margin:0 }}>
-            {view==="overview" ? "Dr. Mai" : view==="addClient" ? "إضافة عميلة" : `${selected?.name}`}
+            {view==="overview" ? "Dr. Mai" : view==="addClient" ? "إضافة عميلة" : `${selected ? selected.name : ""}`}
           </h1>
           <p style={{ fontSize:11, color:C.muted, margin:"2px 0 0", fontWeight:500 }}>
-            {view==="overview" ? `لوحة التحكم · ${TODAY}` : view==="addClient" ? "عميلة جديدة" : `${PLAN_LABELS[clientObj?.plan]} · بدأت ${clientObj?.startDate||""}`}
+            {view==="overview" ? `لوحة التحكم · ${TODAY}` : view==="addClient" ? "عميلة جديدة" : `${PLAN_LABELS[(clientObj||{}).plan]} · بدأت ${(clientObj||{}).startDate||""}`}
           </p>
         </div>
 
@@ -312,7 +312,7 @@ export default function Dashboard() {
             <div style={{ display:"flex", gap:6, flexWrap:"wrap", marginBottom:24 }}>
               {DAYS_AR.map((d,i)=>(
                 <button key={i} onClick={()=>setEditing(ec=>({...ec,sessionDay:i}))}
-                  style={{ padding:"8px 10px", borderRadius:10, fontSize:12, fontWeight:800, cursor:"pointer", background:(editing.sessionDay??0)===i?C.blush:C.bg, border:(editing.sessionDay??0)===i?`2px solid ${C.pink}`:`1.5px solid ${C.border}`, color:(editing.sessionDay??0)===i?C.pink:C.muted, transition:"all 0.2s" }}>
+                  style={{ padding:"8px 10px", borderRadius:10, fontSize:12, fontWeight:800, cursor:"pointer", background:(editing.sessionDay!=null?editing.sessionDay:0)===i?C.blush:C.bg, border:(editing.sessionDay!=null?editing.sessionDay:0)===i?`2px solid ${C.pink}`:`1.5px solid ${C.border}`, color:(editing.sessionDay!=null?editing.sessionDay:0)===i?C.pink:C.muted, transition:"all 0.2s" }}>
                   {d}
                 </button>
               ))}
@@ -404,7 +404,7 @@ function AddClientForm({ name, setName, code, setCode, plan, setPlan, start, set
 
 // ── OVERVIEW ──
 function Overview({ clients, data, onSelect, onMsg }) {
-  const notLogged = clients.filter(c=>!data[c.name]?.find(d=>d.date===TODAY));
+  const notLogged = clients.filter(c=>!(data[c.name]||[]).find(d=>d.date===TODAY));
   const active = clients.filter(c=>getSubInfo(c.startDate,PLAN_MONTHS[c.plan]).remaining>0);
 
   return (
@@ -651,8 +651,8 @@ function ClientDetail({ client, data, range, setRange, onMsg }) {
         <div style={{ background:C.greenLight, border:`1px solid ${C.greenBorder}`, borderRadius:12, padding:"10px 14px", display:"flex", gap:10, alignItems:"center", marginTop:10 }}>
           <span style={{ fontSize:18 }}>🗓️</span>
           <div>
-            <div style={{ fontSize:12, color:C.green, fontWeight:800 }}>يوم الموعد: {DAYS_AR[client.sessionDay??0]}</div>
-            <div style={{ fontSize:11, color:C.sub, fontWeight:500 }}>الموعد القادم: {getNextSessionDate(client.sessionDay??0)}</div>
+            <div style={{ fontSize:12, color:C.green, fontWeight:800 }}>يوم الموعد: {DAYS_AR[client.sessionDay!=null?client.sessionDay:0]}</div>
+            <div style={{ fontSize:11, color:C.sub, fontWeight:500 }}>الموعد القادم: {getNextSessionDate(client.sessionDay!=null?client.sessionDay:0)}</div>
           </div>
         </div>
       </div>
@@ -662,41 +662,41 @@ function ClientDetail({ client, data, range, setRange, onMsg }) {
         <div style={{ background:C.white, border:`1.5px solid ${C.border}`, borderRadius:20, padding:18, marginBottom:16, boxShadow:`0 4px 16px ${C.shadow}` }}>
           <div style={{ fontSize:12, color:C.muted, textTransform:"uppercase", letterSpacing:2, marginBottom:14, fontWeight:700 }}>ملخص اليوم</div>
           <div style={{ display:"grid", gridTemplateColumns:"repeat(2,1fr)", gap:10, marginBottom:14 }}>
-            {effectiveToday?.weight && <BigChip label="الوزن" value={`${effectiveToday?.weight} kg`} color={C.pink} />}
-            <BigChip label="الماء" value={`${effectiveToday?.water} L`} color={C.mauve} />
-            <BigChip label="النوم" value={`${effectiveToday?.sleep} ساعة`} color={C.lavender} />
-            <BigChip label="التوتر" value={`${effectiveToday?.stress}/10`} color={effectiveToday?.stress>7?C.red:C.muted} />
+            {(effectiveToday||{}).weight && <BigChip label="الوزن" value={`${(effectiveToday||{}).weight} kg`} color={C.pink} />}
+            <BigChip label="الماء" value={`${(effectiveToday||{}).water} L`} color={C.mauve} />
+            <BigChip label="النوم" value={`${(effectiveToday||{}).sleep} ساعة`} color={C.lavender} />
+            <BigChip label="التوتر" value={`${(effectiveToday||{}).stress}/10`} color={(effectiveToday||{}).stress>7?C.red:C.muted} />
           </div>
           <div style={{ display:"flex", gap:6, flexWrap:"wrap" }}>
-            <Tag text={effectiveToday?.followedPlan?"✓ التزمت":"✗ لم تلتزم"} color={effectiveToday?.followedPlan?C.green:C.red} />
-            {effectiveToday?.exercise && <Tag text={`🏃 ${effectiveToday?.exerciseMin}د`} color={C.mauve} />}
-            {effectiveToday?.salad && <Tag text="🥗 سلطة" color={C.green} />}
-            {effectiveToday?.fastFood && <Tag text="🍔 fast food" color={C.red} />}
-            {effectiveToday?.binge && <Tag text="⚠️ binge" color={C.red} />}
-            <Tag text={effectiveToday?.mood} color={C.rose} />
+            <Tag text={(effectiveToday||{}).followedPlan?"✓ التزمت":"✗ لم تلتزم"} color={(effectiveToday||{}).followedPlan?C.green:C.red} />
+            {(effectiveToday||{}).exercise && <Tag text={`🏃 ${(effectiveToday||{}).exerciseMin}د`} color={C.mauve} />}
+            {(effectiveToday||{}).salad && <Tag text="🥗 سلطة" color={C.green} />}
+            {(effectiveToday||{}).fastFood && <Tag text="🍔 fast food" color={C.red} />}
+            {(effectiveToday||{}).binge && <Tag text="⚠️ binge" color={C.red} />}
+            <Tag text={(effectiveToday||{}).mood} color={C.rose} />
           </div>
           {/* Period info */}
-          {effectiveToday?.period !== null && effectiveToday?.period !== undefined && (
-            <div style={{ marginTop:12, background:effectiveToday?.period?"#FFF0F4":"#F5FBF7", border:`1px solid ${effectiveToday?.period?C.rose+"50":"#A8D9BC"}`, borderRadius:12, padding:"10px 14px" }}>
-              <div style={{ fontSize:12, fontWeight:800, color:effectiveToday?.period?C.rose:C.green, marginBottom:effectiveToday?.period?6:0 }}>
-                🩸 الدورة الشهرية: {effectiveToday?.period?"موجودة":"غير موجودة"}
+          {(effectiveToday||{}).period !== null && (effectiveToday||{}).period !== undefined && (
+            <div style={{ marginTop:12, background:(effectiveToday||{}).period?"#FFF0F4":"#F5FBF7", border:`1px solid ${(effectiveToday||{}).period?C.rose+"50":"#A8D9BC"}`, borderRadius:12, padding:"10px 14px" }}>
+              <div style={{ fontSize:12, fontWeight:800, color:(effectiveToday||{}).period?C.rose:C.green, marginBottom:(effectiveToday||{}).period?6:0 }}>
+                🩸 الدورة الشهرية: {(effectiveToday||{}).period?"موجودة":"غير موجودة"}
               </div>
-              {effectiveToday?.period && (
+              {(effectiveToday||{}).period && (
                 <div style={{ display:"flex", gap:6, flexWrap:"wrap", marginTop:4 }}>
-                  {effectiveToday?.periodPain && <span style={{ background:"#FDE0EA", border:`1px solid ${C.rose}40`, borderRadius:99, padding:"2px 8px", fontSize:11, color:C.rose, fontWeight:700 }}>ألم 😣</span>}
-                  {effectiveToday?.periodBloat && <span style={{ background:"#FDE0EA", border:`1px solid ${C.rose}40`, borderRadius:99, padding:"2px 8px", fontSize:11, color:C.rose, fontWeight:700 }}>انتفاخ</span>}
-                  {effectiveToday?.periodMood && <span style={{ background:"#FDE0EA", border:`1px solid ${C.rose}40`, borderRadius:99, padding:"2px 8px", fontSize:11, color:C.rose, fontWeight:700 }}>مزاج 😤</span>}
-                  {effectiveToday?.periodCraving && <span style={{ background:"#FDE0EA", border:`1px solid ${C.rose}40`, borderRadius:99, padding:"2px 8px", fontSize:11, color:C.rose, fontWeight:700 }}>شهية 🍫</span>}
-                  {effectiveToday?.periodFatigue && <span style={{ background:"#FDE0EA", border:`1px solid ${C.rose}40`, borderRadius:99, padding:"2px 8px", fontSize:11, color:C.rose, fontWeight:700 }}>إرهاق 😴</span>}
-                  {effectiveToday?.periodHeadache && <span style={{ background:"#FDE0EA", border:`1px solid ${C.rose}40`, borderRadius:99, padding:"2px 8px", fontSize:11, color:C.rose, fontWeight:700 }}>صداع 🤕</span>}
-                  {effectiveToday?.periodBack && <span style={{ background:"#FDE0EA", border:`1px solid ${C.rose}40`, borderRadius:99, padding:"2px 8px", fontSize:11, color:C.rose, fontWeight:700 }}>ألم ظهر 💢</span>}
-                  {effectiveToday?.periodNausea && <span style={{ background:"#FDE0EA", border:`1px solid ${C.rose}40`, borderRadius:99, padding:"2px 8px", fontSize:11, color:C.rose, fontWeight:700 }}>غثيان 🤢</span>}
-                  {effectiveToday?.periodPainLevel > 0 && <span style={{ background:"#FDE0EA", border:`1px solid ${C.rose}40`, borderRadius:99, padding:"2px 8px", fontSize:11, color:C.rose, fontWeight:700 }}>شدة: {effectiveToday?.periodPainLevel}/10</span>}
+                  {(effectiveToday||{}).periodPain && <span style={{ background:"#FDE0EA", border:`1px solid ${C.rose}40`, borderRadius:99, padding:"2px 8px", fontSize:11, color:C.rose, fontWeight:700 }}>ألم 😣</span>}
+                  {(effectiveToday||{}).periodBloat && <span style={{ background:"#FDE0EA", border:`1px solid ${C.rose}40`, borderRadius:99, padding:"2px 8px", fontSize:11, color:C.rose, fontWeight:700 }}>انتفاخ</span>}
+                  {(effectiveToday||{}).periodMood && <span style={{ background:"#FDE0EA", border:`1px solid ${C.rose}40`, borderRadius:99, padding:"2px 8px", fontSize:11, color:C.rose, fontWeight:700 }}>مزاج 😤</span>}
+                  {(effectiveToday||{}).periodCraving && <span style={{ background:"#FDE0EA", border:`1px solid ${C.rose}40`, borderRadius:99, padding:"2px 8px", fontSize:11, color:C.rose, fontWeight:700 }}>شهية 🍫</span>}
+                  {(effectiveToday||{}).periodFatigue && <span style={{ background:"#FDE0EA", border:`1px solid ${C.rose}40`, borderRadius:99, padding:"2px 8px", fontSize:11, color:C.rose, fontWeight:700 }}>إرهاق 😴</span>}
+                  {(effectiveToday||{}).periodHeadache && <span style={{ background:"#FDE0EA", border:`1px solid ${C.rose}40`, borderRadius:99, padding:"2px 8px", fontSize:11, color:C.rose, fontWeight:700 }}>صداع 🤕</span>}
+                  {(effectiveToday||{}).periodBack && <span style={{ background:"#FDE0EA", border:`1px solid ${C.rose}40`, borderRadius:99, padding:"2px 8px", fontSize:11, color:C.rose, fontWeight:700 }}>ألم ظهر 💢</span>}
+                  {(effectiveToday||{}).periodNausea && <span style={{ background:"#FDE0EA", border:`1px solid ${C.rose}40`, borderRadius:99, padding:"2px 8px", fontSize:11, color:C.rose, fontWeight:700 }}>غثيان 🤢</span>}
+                  {(effectiveToday||{}).periodPainLevel > 0 && <span style={{ background:"#FDE0EA", border:`1px solid ${C.rose}40`, borderRadius:99, padding:"2px 8px", fontSize:11, color:C.rose, fontWeight:700 }}>شدة: {(effectiveToday||{}).periodPainLevel}/10</span>}
                 </div>
               )}
             </div>
           )}
-          {effectiveToday?.note && <div style={{ marginTop:12, fontSize:12, color:C.sub, fontStyle:"italic", borderRight:`3px solid ${C.rose}`, paddingRight:10, textAlign:"right", fontWeight:500 }}>"{effectiveToday?.note}"</div>}
+          {(effectiveToday||{}).note && <div style={{ marginTop:12, fontSize:12, color:C.sub, fontStyle:"italic", borderRight:`3px solid ${C.rose}`, paddingRight:10, textAlign:"right", fontWeight:500 }}>"{(effectiveToday||{}).note}"</div>}
 
           {/* Hormone symptoms from cycle tracker */}
           {(()=>{
