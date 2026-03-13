@@ -21,9 +21,11 @@ async function sbUpsert(table, data) {
 }
 async function sbUpdate(table, data, filters) {
   try {
-    const r = await fetch(SB_URL+"/rest/v1/"+table+"?"+filters, { method:"PATCH", headers:sbH, body:JSON.stringify(data) });
-    return r.ok;
-  } catch { return false; }
+    const headers = { "apikey": SB_KEY, "Authorization": "Bearer "+SB_KEY, "Content-Type": "application/json", "Prefer": "return=minimal" };
+    const r = await fetch(SB_URL+"/rest/v1/"+table+"?"+filters, { method:"PATCH", headers, body:JSON.stringify(data) });
+    if (!r.ok) { console.error("sbUpdate error", table, await r.text()); return false; }
+    return true;
+  } catch(e) { console.error("sbUpdate exception", e); return false; }
 }
 async function sbDelete(table, filters) {
   try {
