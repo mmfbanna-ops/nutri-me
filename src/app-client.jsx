@@ -395,6 +395,7 @@ function YesNo({ label, value, onChange, yColor=C.green }) {
 function MemberNav({ active, onChange }) {
   const tabs = [
     { id:"home",    icon:"🏠", label:"الرئيسية" },
+    { id:"checkin", icon:"📋", label:"يومي" },
     { id:"cycle",   icon:"🌙", label:"دورتي" },
     { id:"tracker", icon:"🧬", label:"الأعراض" },
     { id:"chat",    icon:"💬", label:"الدكتورة" },
