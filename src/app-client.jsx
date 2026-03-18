@@ -31,6 +31,20 @@ async function sbUpsert(table, data) {
     return true;
   } catch(e) { console.error("sbUpsert exception", e); return false; }
 }
+async function sbUploadPhoto(clientName, mealKey, file) {
+  try {
+    const ext = file.name.split('.').pop() || 'jpg';
+    const path = clientName + '/' + new Date().toISOString().slice(0,10) + '_' + mealKey + '.' + ext;
+    const r = await fetch(SB_URL + "/storage/v1/object/food-photos/" + path, {
+      method: "POST",
+      headers: { "apikey": SB_KEY, "Authorization": "Bearer " + SB_KEY, "Content-Type": file.type, "x-upsert": "true" },
+      body: file
+    });
+    if (!r.ok) { console.error("sbUploadPhoto error", await r.text()); return null; }
+    return SB_URL + "/storage/v1/object/public/food-photos/" + path;
+  } catch(e) { console.error("sbUploadPhoto", e); return null; }
+}
+
 async function sbUpdate(table, data, filters) {
   try {
     const r = await fetch(SB_URL+"/rest/v1/"+table+"?"+filters, {
@@ -943,9 +957,43 @@ function CheckInTab({ client }) {
               <Field label="عدد الوجبات" type="number" placeholder="3" value={log.meals} onChange={e=>set("meals",e.target.value)}/>
               <Field label="القهوة (كوب)" type="number" placeholder="2" value={log.coffee} onChange={e=>set("coffee",e.target.value)}/>
             </div>
-            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
+            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12, marginBottom:16 }}>
               <YesNo label="سلطة 🥗" value={log.salad} onChange={v=>set("salad",v)} yColor={C.green}/>
               <YesNo label="وجبة سريعة 🍔" value={log.fastFood} onChange={v=>set("fastFood",v)} yColor={C.red}/>
+            </div>
+            <div style={{ borderTop:"1px solid #F5EBF0", paddingTop:14 }}>
+              <div style={{ fontSize:13, fontWeight:800, color:"#7A5565", marginBottom:12 }}>📸 صور الوجبات (اختياري)</div>
+              <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10 }}>
+                {[{key:"breakfast",label:"الفطار 🌅"},{key:"lunch",label:"الغداء ☀️"},{key:"dinner",label:"العشاء 🌙"},{key:"snack",label:"السناك 🍎"}].map(m=>(
+                  <div key={m.key}>
+                    <input type="file" accept="image/*" capture="environment" id={"photo-"+m.key} style={{ display:"none" }}
+                      onChange={async e=>{
+                        const file = e.target.files[0];
+                        if (!file) return;
+                        // Show preview immediately
+                        const reader = new FileReader();
+                        reader.onload = ev => set("photos", Object.assign({}, log.photos||{}, {[m.key]: ev.target.result}));
+                        reader.readAsDataURL(file);
+                        // Upload to Supabase Storage in background
+                        const url = await sbUploadPhoto(client.name, m.key, file);
+                        if (url) set("photos", Object.assign({}, log.photos||{}, {[m.key]: url}));
+                      }}/>
+                    <label htmlFor={"photo-"+m.key} style={{ display:"block", cursor:"pointer" }}>
+                      {log.photos && log.photos[m.key] ? (
+                        <div style={{ position:"relative" }}>
+                          <img src={log.photos[m.key]} alt={m.label} style={{ width:"100%", height:90, objectFit:"cover", borderRadius:12, border:"2px solid #C2607A" }}/>
+                          <button onClick={e=>{e.preventDefault();set("photos", Object.assign({}, log.photos||{}, {[m.key]:null}));}} style={{ position:"absolute", top:4, left:4, background:"rgba(0,0,0,0.5)", border:"none", borderRadius:"50%", width:22, height:22, color:"white", fontSize:12, cursor:"pointer" }}>✕</button>
+                        </div>
+                      ) : (
+                        <div style={{ height:90, borderRadius:12, border:"2px dashed #EDD9E5", background:"#FDFAF8", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:4 }}>
+                          <span style={{ fontSize:22 }}>📷</span>
+                          <span style={{ fontSize:10, color:"#B09AA8", fontWeight:700 }}>{m.label}</span>
+                        </div>
+                      )}
+                    </label>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         )}
