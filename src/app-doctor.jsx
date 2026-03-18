@@ -176,24 +176,25 @@ export default function Dashboard() {
 
   async function saveEdit(u) {
     setSaving(true);
-    // Update UI immediately
-    setClients(p=>p.map(c=>c.name===u.name?u:c));
-    if (selected && selected.name===u.name) setSelected(u);
-    // Save to Supabase
-    const payload = { name:u.name, code:u.code, plan:parseInt(u.plan), start_date:u.startDate, session_day:u.sessionDay!=null?u.sessionDay:0 };
-    console.log("saving to supabase:", payload);
-    const ok = await sbUpsert("clients", payload, "name");
-    console.log("save result:", ok);
-    if (!ok) {
-      await new Promise(r=>setTimeout(r,1000));
-      const ok2 = await sbUpsert("clients", payload, "name");
-      console.log("retry result:", ok2);
-      if (!ok2) { alert("⚠️ فشل الحفظ — تحققي من الاتصال"); setSaving(false); return; }
-    }
+    const headers = { "apikey": SB_KEY, "Authorization": "Bearer "+SB_KEY, "Content-Type": "application/json", "Prefer": "return=minimal" };
+    let ok = false;
+    try {
+      const r = await fetch(SB_URL+"/rest/v1/clients?name=eq."+u.name, {
+        method:"PATCH", headers,
+        body:JSON.stringify({ code:u.code, plan:parseInt(u.plan), start_date:u.startDate, session_day:u.sessionDay!=null?u.sessionDay:0 })
+      });
+      ok = r.ok;
+      if (!ok) console.error("PATCH failed:", await r.text());
+    } catch(e) { console.error("PATCH exception:", e); }
+    if (!ok) { alert("فشل الحفظ"); setSaving(false); return; }
+    const updated = {...u, sessionDay: u.sessionDay!=null?u.sessionDay:0};
+    setClients(p=>p.map(c=>c.name===u.name?updated:c));
+    if (selected && selected.name===u.name) setSelected(updated);
     setSaving(false);
     setEditing(null);
   }
 
+  
   async function sendMsg(clientName, text) {
     if (!text.trim()) return;
     const t = new Date().toLocaleTimeString("ar-EG",{hour:"2-digit",minute:"2-digit"});
