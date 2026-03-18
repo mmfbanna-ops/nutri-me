@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 
 // ── SUPABASE ──
 const SB_URL = "https://uqykrqxqtogecakrjpys.supabase.co";
@@ -136,21 +136,18 @@ export default function Dashboard() {
   const [newCode,  setNewCode]  = useState("");
   const [newPlan,  setNewPlan]  = useState(1);
   const [newStart, setNewStart] = useState(TODAY);
-  const loadedRef = useRef(false);
-
-  useEffect(()=>{
-    if (loadedRef.current) return;
-    loadedRef.current = true;
-    async function loadClients() {
-      const rows = await sbGet("clients", "select=name,code,plan,start_date,session_day&order=id");
-      if (rows && rows.length > 0) {
-        const mapped = rows.map(r=>({ name:r.name, code:r.code, plan:r.plan, startDate:r.start_date, sessionDay:r.session_day||0 }));
-        setClients(mapped);
-        setAllData(Object.fromEntries(mapped.map(c=>[c.name,genHistory(c.name)])));
-      }
+  async function loadClients() {
+    const rows = await sbGet("clients", "select=name,code,plan,start_date,session_day&order=id");
+    if (rows && rows.length > 0) {
+      const mapped = rows.map(r=>({ name:r.name, code:r.code, plan:r.plan, startDate:r.start_date, sessionDay:r.session_day||0 }));
+      setClients(mapped);
+      setAllData(Object.fromEntries(mapped.map(c=>[c.name,genHistory(c.name)])));
+      setSelected(prev => prev ? (mapped.find(c=>c.name===prev.name)||prev) : null);
     }
-    loadClients();
-  },[]);
+  }
+
+  useEffect(()=>{ loadClients(); },[]);
+  useEffect(()=>{ if(view==="overview") loadClients(); },[view]);
 
   const clientObj = selected ? clients.find(c=>c.name===selected.name) : null;
 
@@ -699,6 +696,23 @@ function ClientDetail({ client, data, range, setRange, onMsg }) {
             </div>
           )}
           {(effectiveToday||{}).note && <div style={{ marginTop:12, fontSize:12, color:C.sub, fontStyle:"italic", borderRight:`3px solid ${C.rose}`, paddingRight:10, textAlign:"right", fontWeight:500 }}>"{(effectiveToday||{}).note}"</div>}
+
+          {/* Meal Photos */}
+          {(effectiveToday||{}).photos && Object.values((effectiveToday||{}).photos||{}).some(Boolean) && (
+            <div style={{ marginTop:14, borderTop:"1px solid #F5EBF0", paddingTop:14 }}>
+              <div style={{ fontSize:12, fontWeight:800, color:"#7A5565", marginBottom:10 }}>📸 صور الوجبات</div>
+              <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8 }}>
+                {[{key:"breakfast",label:"الفطار 🌅"},{key:"lunch",label:"الغداء ☀️"},{key:"dinner",label:"العشاء 🌙"},{key:"snack",label:"السناك 🍎"}].map(m=>(
+                  (effectiveToday||{}).photos && (effectiveToday||{}).photos[m.key] ? (
+                    <div key={m.key}>
+                      <div style={{ fontSize:10, color:"#B09AA8", fontWeight:700, marginBottom:4 }}>{m.label}</div>
+                      <img src={(effectiveToday||{}).photos[m.key]} alt={m.label} style={{ width:"100%", height:80, objectFit:"cover", borderRadius:10, border:"1px solid #EDD9E5" }}/>
+                    </div>
+                  ) : null
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Hormone symptoms from cycle tracker */}
           {(()=>{
