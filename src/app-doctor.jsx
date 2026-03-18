@@ -126,10 +126,10 @@ export default function Dashboard() {
   const [view, setView]           = useState("overview");
   const [selected, setSelected]   = useState(null);
   const [histRange, setHistRange] = useState("week");
-  const [clients, setClients]     = useState(INIT_CLIENTS);
+  const [clients, setClients]     = useState([]);
   const [editing, setEditing]     = useState(null);
   const [saving, setSaving]       = useState(false);
-  const [allData, setAllData]     = useState(()=>Object.fromEntries(INIT_CLIENTS.map(c=>[c.name,genHistory(c.name)])));
+  const [allData, setAllData]     = useState({});
   const [msgModal, setMsgModal]   = useState(null);
   const [msgText, setMsgText]     = useState("");
   const [msgSent, setMsgSent]     = useState(false);
