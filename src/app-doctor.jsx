@@ -12,9 +12,10 @@ async function sbGet(table, filters) {
     return await r.json();
   } catch { return null; }
 }
-async function sbUpsert(table, data) {
+async function sbUpsert(table, data, onConflict) {
   try {
-    const r = await fetch(SB_URL+"/rest/v1/"+table, { method:"POST", headers:sbH, body:JSON.stringify(data) });
+    const url = SB_URL+"/rest/v1/"+table+(onConflict?"?on_conflict="+onConflict:"");
+    const r = await fetch(url, { method:"POST", headers:sbH, body:JSON.stringify(data) });
     if (!r.ok) { console.error("sbUpsert", table, await r.text()); return false; }
     return true;
   } catch(e) { console.error("sbUpsert", e); return false; }
@@ -176,11 +177,16 @@ export default function Dashboard() {
     // Update UI immediately
     setClients(p=>p.map(c=>c.name===u.name?u:c));
     if (selected && selected.name===u.name) setSelected(u);
-    // Save to Supabase using upsert (more reliable than PATCH)
-    const ok = await sbUpsert("clients", { name:u.name, code:u.code, plan:parseInt(u.plan), start_date:u.startDate, session_day:u.sessionDay!=null?u.sessionDay:0 });
+    // Save to Supabase
+    const payload = { name:u.name, code:u.code, plan:parseInt(u.plan), start_date:u.startDate, session_day:u.sessionDay!=null?u.sessionDay:0 };
+    console.log("saving to supabase:", payload);
+    const ok = await sbUpsert("clients", payload, "name");
+    console.log("save result:", ok);
     if (!ok) {
       await new Promise(r=>setTimeout(r,1000));
-      await sbUpsert("clients", { name:u.name, code:u.code, plan:parseInt(u.plan), start_date:u.startDate, session_day:u.sessionDay!=null?u.sessionDay:0 });
+      const ok2 = await sbUpsert("clients", payload, "name");
+      console.log("retry result:", ok2);
+      if (!ok2) { alert("⚠️ فشل الحفظ — تحققي من الاتصال"); setSaving(false); return; }
     }
     setSaving(false);
     setEditing(null);
