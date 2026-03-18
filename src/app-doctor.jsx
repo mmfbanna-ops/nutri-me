@@ -1,3 +1,4 @@
+// v2.2
 import { useState, useEffect } from "react";
 
 // ── SUPABASE ──
