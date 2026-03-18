@@ -176,12 +176,11 @@ export default function Dashboard() {
     // Update UI immediately
     setClients(p=>p.map(c=>c.name===u.name?u:c));
     if (selected && selected.name===u.name) setSelected(u);
-    // Save to Supabase and wait for confirmation
-    const ok = await sbUpdate("clients", { code:u.code, plan:parseInt(u.plan), start_date:u.startDate, session_day:u.sessionDay||0 }, "name=eq."+u.name);
+    // Save to Supabase using upsert (more reliable than PATCH)
+    const ok = await sbUpsert("clients", { name:u.name, code:u.code, plan:parseInt(u.plan), start_date:u.startDate, session_day:u.sessionDay!=null?u.sessionDay:0 });
     if (!ok) {
-      // Retry once after a short delay
       await new Promise(r=>setTimeout(r,1000));
-      await sbUpdate("clients", { code:u.code, plan:parseInt(u.plan), start_date:u.startDate, session_day:u.sessionDay||0 }, "name=eq."+u.name);
+      await sbUpsert("clients", { name:u.name, code:u.code, plan:parseInt(u.plan), start_date:u.startDate, session_day:u.sessionDay!=null?u.sessionDay:0 });
     }
     setSaving(false);
     setEditing(null);
