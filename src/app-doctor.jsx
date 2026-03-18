@@ -393,7 +393,7 @@ function AddClientForm({ name, setName, code, setCode, plan, setPlan, start, set
                   <div>
                     <div style={{ fontSize:14, fontWeight:800, color:C.text }}>{c.name}</div>
                     <div style={{ fontSize:11, color:C.muted, marginTop:3, fontWeight:500 }}>
-                      كود: <strong style={{ color:C.pink, letterSpacing:2 }}>{c.code}</strong> · {PLAN_LABELS[c.plan]} · فاضل {si.remaining} يوم
+                      كود: <strong style={{ color:C.pink, letterSpacing:2 }}>{c.code}</strong> · {PLAN_LABELS[c.plan]} · متبقي {si.followupsLeft} جلسة
                     </div>
                   </div>
                   <button onClick={()=>onDelete(c.name)} style={{ background:C.redLight, border:`1px solid ${C.red}40`, borderRadius:8, color:C.red, padding:"6px 12px", fontSize:12, fontWeight:700, cursor:"pointer" }}>حذف</button>
@@ -476,7 +476,7 @@ function Overview({ clients, data, onSelect, onMsg }) {
                   {/* Progress */}
                   <div style={{ marginBottom:14 }} onClick={()=>onSelect(client)} className="cursor-pointer">
                     <div style={{ display:"flex", justifyContent:"space-between", fontSize:11, color:C.sub, marginBottom:6, fontWeight:600 }}>
-                      <span style={{ color:si.isExpired?C.red:C.muted }}>{si.isExpired?"⚠️ انتهى":` فاضل ${si.remaining} يوم`}</span>
+                      <span style={{ color:si.isExpired?C.red:C.muted }}>{si.isExpired?"⚠️ انتهى":` متبقي ${si.followupsLeft} جلسة`}</span>
                       <span>{PLAN_LABELS[client.plan]} · أسبوع {si.weeksDone+1}</span>
                     </div>
                     <div style={{ height:7, background:C.borderSoft, borderRadius:99, overflow:"hidden" }}>
@@ -489,7 +489,7 @@ function Overview({ clients, data, onSelect, onMsg }) {
                     <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:8, flex:1 }}>
                       <SmChip label="الالتزام" value={`${compliance}%`} color={compliance>=70?C.green:C.red} />
                       <SmChip label="متابعات" value={`${si.followupsDone}/${si.followupsTotal}`} color={C.mauve} />
-                      <SmChip label="أسابيع باقية" value={`${si.weeksLeft}`} color={si.weeksLeft<=1?C.red:C.lavender} />
+                      <SmChip label="جلسات متبقية" value={`${si.followupsLeft}`} color={si.followupsLeft<=1?C.red:C.lavender} />
                     </div>
                     <button onClick={e=>{e.stopPropagation();onMsg(client.name);}} style={{ background:"#F5EBF8", border:`1px solid ${C.lavender}`, borderRadius:10, color:C.mauve, padding:"8px 10px", fontSize:18, cursor:"pointer", flexShrink:0 }} title="إرسال رسالة">💬</button>
                   </div>
@@ -629,7 +629,7 @@ function ClientDetail({ client, data, range, setRange, onMsg }) {
         </div>
         <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:8, marginBottom:18 }}>
           <BigChip label="يوم مضى" value={`${elapsed}`} color={C.sub} />
-          <BigChip label="باقي" value={isExpired?"منتهي":`${remaining}ي`} color={isExpired?C.red:C.pink} />
+          <BigChip label="جلسات متبقية" value={isExpired?"منتهي":`${followupsLeft}`} color={isExpired?C.red:C.pink} />
           <BigChip label="متابعات" value={`${followupsDone}/${followupsTotal}`} color={C.mauve} />
         </div>
         <div style={{ fontSize:12, color:C.muted, marginBottom:10, fontWeight:600 }}>مسار الأسابيع</div>
@@ -648,7 +648,7 @@ function ClientDetail({ client, data, range, setRange, onMsg }) {
             <span style={{ fontSize:18 }}>📅</span>
             <div>
               <div style={{ fontSize:12, color:C.mauve, fontWeight:800 }}>متابعة أسبوع {weeksDone+1}</div>
-              <div style={{ fontSize:11, color:C.sub, fontWeight:500 }}>فاضل {followupsLeft} متابعة من أصل {followupsTotal}</div>
+              <div style={{ fontSize:11, color:C.sub, fontWeight:500 }}>متبقي {followupsLeft} جلسة من أصل {followupsTotal}</div>
             </div>
           </div>
         )}
