@@ -79,6 +79,7 @@ const DEMO_CLIENTS = [
   { name:"Israa",  code:"1350", plan:1, startDate:"2026-03-09", sessionDay:0 },
   { name:"Mariam", code:"8889", plan:1, startDate:"2026-03-09", sessionDay:0 },
   { name:"Noren",  code:"1351", plan:1, startDate:"2026-03-12", sessionDay:0 },
+  { name:"Sara",   code:"1352", plan:1, startDate:"2026-03-18", sessionDay:0 },
 ];
 const PLAN_MONTHS = {1:1,2:2,3:3};
 const DAYS_AR = ["الأحد","الاثنين","الثلاثاء","الأربعاء","الخميس","الجمعة","السبت"];
@@ -472,7 +473,7 @@ function GuestHome({ onLogin }) {
               <div style={{ fontSize:13, fontWeight:800, color:C.text, marginBottom:8 }}>👩‍🍳 طريقة التحضير</div>
               {r.steps.map((s,i)=><div key={i} style={{ fontSize:13, color:C.sub, padding:"5px 0", display:"flex", gap:10 }}><span style={{ width:20, height:20, background:C.blush, borderRadius:"50%", display:"flex", alignItems:"center", justifyContent:"center", fontSize:10, fontWeight:800, color:C.pink, flexShrink:0 }}>{i+1}</span>{s}</div>)}
             </div>
-            <div style={{ background:C.peach, border:`1px solid #F0D8CC`, borderRadius:12, padding:"10px 14px", marginBottom:24, fontSize:13, color:C.sub, fontWeight:600 }}>✨ {r.tip}</div>
+            <div style={{ background:C.peach, border:"1px solid #F0D8CC", borderRadius:12, padding:"10px 14px", marginBottom:24, fontSize:13, color:C.sub, fontWeight:600 }}>✨ {r.tip}</div>
             <button onClick={onLogin} style={{ width:"100%", padding:"15px 0", borderRadius:16, background:`linear-gradient(135deg,${C.pink},${C.mauve})`, border:"none", color:"white", fontSize:15, fontWeight:800, cursor:"pointer" }}>
               🌸 Get Your Full Meal Plan
             </button>
@@ -498,8 +499,8 @@ function GuestHome({ onLogin }) {
         <div style={{ display:"flex", alignItems:"center", gap:10 }}>
           <img src={LOGO_SRC} alt="NM" style={{ width:36, height:36 }}/>
           <div>
-            <div className="serif" style={{ fontSize:15, fontWeight:700, color:C.text, lineHeight:1.2 }}>Nutri Me</div>
-            <div style={{ fontSize:9, color:C.muted, fontWeight:600, letterSpacing:1 }}>HORMONE BALANCE</div>
+            <div style={{ fontSize:15, fontWeight:800, color:C.text, lineHeight:1.2, fontFamily:"'Poppins','Tajawal',sans-serif" }}>Nutrime</div>
+            <div style={{ fontSize:9, color:C.muted, fontWeight:600, letterSpacing:1 }}>By Dr Mai ElBanna</div>
           </div>
         </div>
         <button onClick={onLogin} style={{ background:`linear-gradient(135deg,${C.pink},${C.mauve})`, border:"none", borderRadius:12, color:"white", padding:"9px 18px", fontSize:12, fontWeight:800, cursor:"pointer" }}>
@@ -518,46 +519,81 @@ function GuestHome({ onLogin }) {
 
       <div style={{ ...wrap, paddingTop:20 }}>
 
-        {/* ── HOME TAB ── */}
+        {/* HOME TAB */}
         {guestTab==="home" && (
           <div className="fade-up">
-            {/* Hero */}
-            <div style={{ background:`linear-gradient(135deg, #FDF0F4, #F5EBF8, #EDE8F5)`, border:`1px solid ${C.border}`, borderRadius:24, padding:"32px 24px", marginBottom:20, textAlign:"center", position:"relative", overflow:"hidden" }}>
-              <div style={{ position:"absolute", top:-20, right:-20, width:120, height:120, borderRadius:"50%", background:C.blush, opacity:.4 }}/>
-              <div style={{ position:"absolute", bottom:-30, left:-10, width:80, height:80, borderRadius:"50%", background:`${C.lavender}50` }}/>
+
+            {/* HERO */}
+            <div style={{ background:"linear-gradient(135deg,#6B2FA0,#C2607A,#E8A0B4)", borderRadius:28, padding:"40px 24px 36px", marginBottom:20, textAlign:"center", position:"relative", overflow:"hidden" }}>
+              {/* decorative circles */}
+              <div style={{ position:"absolute", top:-30, right:-30, width:140, height:140, borderRadius:"50%", background:"rgba(255,255,255,0.08)" }}/>
+              <div style={{ position:"absolute", bottom:-40, left:-20, width:100, height:100, borderRadius:"50%", background:"rgba(255,255,255,0.06)" }}/>
+              <div style={{ position:"absolute", top:"50%", left:-10, transform:"translateY(-50%)", width:60, height:180, borderRadius:99, background:"rgba(255,255,255,0.04)" }}/>
+              {/* female line art */}
+              <div style={{ position:"relative", marginBottom:20 }}>
+                <svg width="80" height="100" viewBox="0 0 80 100" style={{ margin:"0 auto", display:"block", opacity:0.9 }}>
+                  <circle cx="40" cy="18" r="12" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="2"/>
+                  <path d="M40 30 Q28 45 25 65 Q22 80 30 85 Q40 88 50 85 Q58 80 55 65 Q52 45 40 30" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="2"/>
+                  <path d="M30 50 Q15 55 12 68" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="1.5" strokeLinecap="round"/>
+                  <path d="M50 50 Q65 55 68 68" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="1.5" strokeLinecap="round"/>
+                  <path d="M33 75 Q30 88 28 95" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="1.5" strokeLinecap="round"/>
+                  <path d="M47 75 Q50 88 52 95" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="1.5" strokeLinecap="round"/>
+                  <circle cx="55" cy="40" r="4" fill="rgba(255,255,255,0.2)"/>
+                  <circle cx="58" cy="38" r="2" fill="rgba(255,255,255,0.15)"/>
+                </svg>
+              </div>
               <div style={{ position:"relative" }}>
-                <div style={{ fontSize:48, marginBottom:12, animation:"heartbeat 2s infinite" }}>🌸</div>
-                <div className="serif" style={{ fontSize:13, color:C.mauve, fontWeight:700, letterSpacing:2, marginBottom:8, textTransform:"uppercase" }}>Welcome to</div>
-                <h1 className="serif" style={{ fontSize:26, fontWeight:900, color:C.text, margin:"0 0 6px", lineHeight:1.3 }}>Nutri Me</h1>
-                <div className="serif" style={{ fontSize:14, color:C.rose, fontWeight:600, marginBottom:6 }}>Hormone Balance</div>
-                <div style={{ fontSize:12, color:C.sub, fontWeight:500, lineHeight:1.8 }}>by Therapeutic Nutrition</div>
-                <div style={{ width:40, height:2, background:`linear-gradient(90deg,${C.pink},${C.mauve})`, margin:"14px auto 16px", borderRadius:99 }}/>
-                <p style={{ fontSize:13, color:C.sub, fontWeight:500, lineHeight:1.9, marginBottom:20 }}>
-                  متخصصة في التغذية العلاجية الهرمونية<br/>لتكيس المبايض، مقاومة الإنسولين، وتوازن الهرمونات
+                <div style={{ fontSize:11, color:"rgba(255,255,255,0.8)", fontWeight:700, letterSpacing:3, marginBottom:6, fontFamily:"'Poppins',sans-serif", textTransform:"uppercase" }}>Welcome to</div>
+                <h1 style={{ fontSize:32, fontWeight:900, color:"white", margin:"0 0 4px", lineHeight:1.2, fontFamily:"'Poppins',sans-serif" }}>Nutrime</h1>
+                <div style={{ fontSize:13, color:"rgba(255,255,255,0.85)", fontWeight:600, marginBottom:16, fontFamily:"'Poppins',sans-serif" }}>By Dr Mai ElBanna</div>
+                <div style={{ width:40, height:2, background:"rgba(255,255,255,0.4)", margin:"0 auto 18px", borderRadius:99 }}/>
+                <div style={{ background:"rgba(255,255,255,0.15)", borderRadius:14, padding:"12px 16px", marginBottom:16, backdropFilter:"blur(4px)" }}>
+                  <div style={{ fontSize:14, color:"white", fontWeight:700, lineHeight:1.8, direction:"rtl" }}>
+                    "مش دايت… دي خطة علاج مخصصة لجسمك 💜"
+                  </div>
+                </div>
+                <p style={{ fontSize:12, color:"rgba(255,255,255,0.85)", fontWeight:500, lineHeight:1.9, marginBottom:20, direction:"rtl" }}>
+                  متابعة أونلاين للتغذية العلاجية وصحة المرأة<br/>بناءً على حالتك وهرموناتك<br/>
+                  <span style={{ fontWeight:700 }}>👩‍⚕️ بإشراف دكاترة متخصصة</span>
                 </p>
-                <button onClick={onLogin} style={{ background:`linear-gradient(135deg,${C.pink},${C.mauve})`, border:"none", borderRadius:14, color:"white", padding:"14px 32px", fontSize:14, fontWeight:800, cursor:"pointer", boxShadow:`0 8px 24px ${C.shadow}`, display:"inline-block" }}>
+                <div style={{ fontSize:13, color:"rgba(255,255,255,0.9)", fontWeight:800, letterSpacing:1, marginBottom:24, fontFamily:"'Poppins',sans-serif", fontStyle:"italic" }}>
+                  "Balance Your Hormones. Transform Your Life."
+                </div>
+                <button onClick={onLogin} style={{ background:"rgba(255,255,255,0.95)", border:"none", borderRadius:16, color:C.pink, padding:"14px 32px", fontSize:14, fontWeight:900, cursor:"pointer", boxShadow:"0 8px 24px rgba(0,0,0,0.2)", fontFamily:"'Poppins',sans-serif" }}>
                   🌸 Start Your Personalized Plan
                 </button>
               </div>
             </div>
 
             {/* About Dr Mai */}
-            <div style={{ ...card, background:"linear-gradient(135deg,#FDF8F5,#F5EBF8)" }}>
+            <div style={{ ...card, background:"linear-gradient(135deg,#FDF8F5,#F5EBF8)", marginBottom:14 }}>
+              <div style={{ fontSize:11, color:C.mauve, fontWeight:700, letterSpacing:2, marginBottom:12, textTransform:"uppercase" }}>About</div>
               <div style={{ display:"flex", gap:14, alignItems:"flex-start" }}>
-                <div style={{ width:56, height:56, borderRadius:"50%", background:`linear-gradient(135deg,${C.pink},${C.mauve})`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:24, flexShrink:0 }}>👩‍⚕️</div>
-                <div>
-                  <div className="serif" style={{ fontSize:16, fontWeight:700, color:C.text, marginBottom:3 }}>Dr. Mai</div>
-                  <div style={{ fontSize:11, color:C.mauve, fontWeight:700, letterSpacing:1, marginBottom:8 }}>Therapeutic Nutrition Specialist</div>
-                  <div style={{ display:"flex", flexDirection:"column", gap:5 }}>
-                    {["🎓 أستاذ جامعي في التغذية الإكلينيكية","🔬 دكتوراه في صحة المرأة الهرمونية","💊 متخصصة PCOS ومقاومة الإنسولين","⭐ أكثر من 500 عميلة"].map((x,i)=>(
-                      <div key={i} style={{ fontSize:12, color:C.sub, fontWeight:500 }}>{x}</div>
+                <div style={{ width:60, height:60, borderRadius:"50%", background:`linear-gradient(135deg,${C.mauve},${C.pink})`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:26, flexShrink:0, boxShadow:`0 4px 16px ${C.shadow}` }}>👩‍⚕️</div>
+                <div style={{ flex:1 }}>
+                  <div style={{ fontSize:17, fontWeight:900, color:C.text, marginBottom:2, fontFamily:"'Poppins',sans-serif" }}>Dr. Mai ElBanna</div>
+                  <div style={{ fontSize:11, color:C.mauve, fontWeight:700, letterSpacing:0.5, marginBottom:10, lineHeight:1.5 }}>
+                    Lecturer of Women's Health Physiotherapy{"
+"}& Clinical Nutrition
+                  </div>
+                  <div style={{ fontSize:12, color:C.sub, fontWeight:500, lineHeight:1.9, marginBottom:10 }}>
+                    PhD holder from Cairo University in Women's Health Physiotherapy, with advanced qualifications in clinical nutrition, including a diploma from the American University in Cairo.
+                  </div>
+                  <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
+                    {[
+                      "🎓 دكتوراه في فيزيوثيرابي صحة المرأة — جامعة القاهرة",
+                      "🏛️ دبلوم تغذية إكلينيكية — الجامعة الأمريكية بالقاهرة",
+                      "💊 متخصصة PCOS ومقاومة الإنسولين",
+                      "⭐ متابعة أونلاين شخصية 100%"
+                    ].map((x,i)=>(
+                      <div key={i} style={{ fontSize:12, color:C.sub, fontWeight:600, display:"flex", gap:6, alignItems:"flex-start" }}>{x}</div>
                     ))}
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Services quick preview */}
+            {/* Services */}
             <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10, marginBottom:14 }}>
               {[
                 { icon:"🔬", title:"PCOS Support", desc:"خطة علاجية لتكيس المبايض", color:C.pink },
@@ -567,7 +603,7 @@ function GuestHome({ onLogin }) {
               ].map((s,i)=>(
                 <div key={i} style={{ background:C.white, border:`1px solid ${C.border}`, borderRadius:16, padding:"14px 12px", cursor:"pointer" }} onClick={onLogin}>
                   <div style={{ fontSize:24, marginBottom:8 }}>{s.icon}</div>
-                  <div style={{ fontSize:13, fontWeight:800, color:C.text, marginBottom:3 }}>{s.title}</div>
+                  <div style={{ fontSize:13, fontWeight:800, color:C.text, marginBottom:3, fontFamily:"'Poppins',sans-serif" }}>{s.title}</div>
                   <div style={{ fontSize:11, color:C.muted, fontWeight:500 }}>{s.desc}</div>
                 </div>
               ))}
@@ -576,9 +612,9 @@ function GuestHome({ onLogin }) {
             {/* CTA */}
             <div style={{ ...card, textAlign:"center", background:"linear-gradient(135deg,#FDF0F4,#F5EBF8)", border:`1.5px dashed ${C.border}` }}>
               <div style={{ fontSize:28, marginBottom:8 }}>✨</div>
-              <div className="serif" style={{ fontSize:16, fontWeight:700, color:C.text, marginBottom:6 }}>Ready to balance your hormones?</div>
+              <div style={{ fontSize:16, fontWeight:800, color:C.text, marginBottom:6, fontFamily:"'Poppins',sans-serif" }}>Ready to balance your hormones?</div>
               <div style={{ fontSize:13, color:C.sub, fontWeight:500, lineHeight:1.8, marginBottom:16 }}>
-                ابدأي رحلتك مع متابعة شخصية من Dr. Mai<br/>خطة مخصصة لهرموناتك بالكامل
+                ابدأي رحلتك مع متابعة شخصية<br/>خطة مخصصة لهرموناتك بالكامل
               </div>
               <button onClick={onLogin} style={{ background:`linear-gradient(135deg,${C.pink},${C.mauve})`, border:"none", borderRadius:14, color:"white", padding:"14px 28px", fontSize:14, fontWeight:800, cursor:"pointer" }}>
                 Start your personalized follow-up →
@@ -587,13 +623,13 @@ function GuestHome({ onLogin }) {
           </div>
         )}
 
-        {/* ── ARTICLES TAB ── */}
+        {/* ARTICLES TAB */}
         {guestTab==="articles" && (
           <div className="fade-up">
             <div className="serif" style={{ fontSize:22, fontWeight:700, color:C.text, marginBottom:4 }}>Hormone Health</div>
             <div className="serif" style={{ fontSize:14, color:C.rose, marginBottom:20 }}>Articles & Education</div>
             {ARTICLES.map(a=>(
-              <div key={a.id} style={{ ...card, cursor:"pointer", transition:"transform .15s" }} onClick={()=>setOpenArticle(a.id)}>
+              <div key={a.id} style={{ ...card, cursor:"pointer" }} onClick={()=>setOpenArticle(a.id)}>
                 <div style={{ display:"flex", gap:14, alignItems:"center" }}>
                   <div style={{ fontSize:36, flexShrink:0 }}>{a.emoji}</div>
                   <div style={{ flex:1 }}>
@@ -604,7 +640,7 @@ function GuestHome({ onLogin }) {
                     <div className="serif" style={{ fontSize:15, fontWeight:700, color:C.text, lineHeight:1.5 }}>{a.title}</div>
                     <div style={{ fontSize:12, color:C.sub, fontWeight:500, marginTop:4, lineHeight:1.6 }}>{a.summary}</div>
                   </div>
-                  <div style={{ color:C.muted, fontSize:16, flexShrink:0 }}>›</div>
+                  <div style={{ color:C.muted, fontSize:16 }}>›</div>
                 </div>
               </div>
             ))}
@@ -617,7 +653,7 @@ function GuestHome({ onLogin }) {
           </div>
         )}
 
-        {/* ── RECIPES TAB ── */}
+        {/* RECIPES TAB */}
         {guestTab==="recipes" && (
           <div className="fade-up">
             <div className="serif" style={{ fontSize:22, fontWeight:700, color:C.text, marginBottom:4 }}>Hormone Friendly</div>
@@ -641,7 +677,7 @@ function GuestHome({ onLogin }) {
           </div>
         )}
 
-        {/* ── FAQ TAB ── */}
+        {/* FAQ TAB */}
         {guestTab==="faq" && (
           <div className="fade-up">
             <div className="serif" style={{ fontSize:22, fontWeight:700, color:C.text, marginBottom:4 }}>FAQ</div>
@@ -658,7 +694,7 @@ function GuestHome({ onLogin }) {
               </div>
             ))}
             <div style={{ ...card, textAlign:"center", background:"linear-gradient(135deg,#FDF0F4,#F5EBF8)", border:`1.5px dashed ${C.border}` }}>
-              <div style={{ fontSize:13, color:C.sub, fontWeight:500, marginBottom:12 }}>عندك سؤال تاني؟ خبريني شخصياً 🌸</div>
+              <div style={{ fontSize:13, color:C.sub, fontWeight:500, marginBottom:12 }}>عندك سؤال تاني؟ 🌸</div>
               <button onClick={onLogin} style={{ background:`linear-gradient(135deg,${C.pink},${C.mauve})`, border:"none", borderRadius:12, color:"white", padding:"12px 24px", fontSize:13, fontWeight:800, cursor:"pointer" }}>
                 تواصلي مع Dr. Mai
               </button>

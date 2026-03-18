@@ -112,6 +112,7 @@ const INIT_CLIENTS = [
   { name:"Israa",  code:"1350", plan:1, startDate:"2026-03-09", sessionDay:0 },
   { name:"Mariam", code:"8889", plan:1, startDate:"2026-03-09", sessionDay:0 },
   { name:"Noren",  code:"1351", plan:1, startDate:"2026-03-12", sessionDay:0 },
+  { name:"Sara",   code:"1352", plan:1, startDate:"2026-03-18", sessionDay:0 },
 ];
 
 function getNextSessionDate(sessionDay) {
