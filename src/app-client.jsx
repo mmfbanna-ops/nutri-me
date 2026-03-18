@@ -18,7 +18,10 @@ async function sbGet(table, filters) {
 }
 async function sbUpsert(table, data) {
   try {
-    const r = await fetch(SB_URL+"/rest/v1/"+table, {
+    const conflictMap = { clients:"name", daily_logs:"client_name,date", hormone_symptoms:"client_name,date", cycle_data:"client_name", messages:"client_name,role,time" };
+    const col = conflictMap[table] || "id";
+    const url = SB_URL+"/rest/v1/"+table+"?on_conflict="+col;
+    const r = await fetch(url, {
       method: "POST",
       headers: { ...sbHeaders, "Prefer": "resolution=merge-duplicates,return=minimal" },
       body: JSON.stringify(data)

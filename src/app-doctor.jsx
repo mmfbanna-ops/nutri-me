@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 // ── SUPABASE ──
 const SB_URL = "https://uqykrqxqtogecakrjpys.supabase.co";
 const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVxeWtycXhxdG9nZWNha3JqcHlzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzMjc2MzcsImV4cCI6MjA4ODkwMzYzN30.h5Y0YTGgEWKPXBIvb1q0I_mwNNKBlxc5jV_EqG78Me4";
-const sbH = { "apikey": SB_KEY, "Authorization": "Bearer "+SB_KEY, "Content-Type": "application/json", "Prefer": "resolution=merge-duplicates,return=minimal" };
+const sbH = { "apikey": SB_KEY, "Authorization": "Bearer "+SB_KEY, "Content-Type": "application/json" };
 
 async function sbGet(table, filters) {
   try {
@@ -14,8 +14,10 @@ async function sbGet(table, filters) {
 }
 async function sbUpsert(table, data, onConflict) {
   try {
-    const url = SB_URL+"/rest/v1/"+table+(onConflict?"?on_conflict="+onConflict:"");
-    const r = await fetch(url, { method:"POST", headers:sbH, body:JSON.stringify(data) });
+    const col = onConflict || "id";
+    const url = SB_URL+"/rest/v1/"+table+"?on_conflict="+col;
+    const headers = { ...sbH, "Prefer": "resolution=merge-duplicates,return=minimal" };
+    const r = await fetch(url, { method:"POST", headers, body:JSON.stringify(data) });
     if (!r.ok) { console.error("sbUpsert", table, await r.text()); return false; }
     return true;
   } catch(e) { console.error("sbUpsert", e); return false; }
