@@ -142,16 +142,15 @@ export default function Dashboard() {
   async function loadClients() {
     const rows = await sbGet("clients", "select=name,code,plan,start_date,session_day&order=id");
     if (rows && rows.length > 0) {
-      const mapped = rows.map(r=>({ name:r.name, code:r.code, plan:r.plan, startDate:r.start_date, sessionDay:r.session_day||0 }));
+      const mapped = rows.map(r=>({ name:r.name, code:r.code, plan:r.plan, startDate:r.start_date, sessionDay:r.session_day!=null?r.session_day:0 }));
       setClients(mapped);
       setAllData(Object.fromEntries(mapped.map(c=>[c.name,genHistory(c.name)])));
-      setSelected(prev => prev ? (mapped.find(c=>c.name===prev.name)||prev) : null);
     }
   }
 
   useEffect(()=>{ loadClients(); },[]);
 
-  const clientObj = selected ? clients.find(c=>c.name===selected.name) : null;
+  const clientObj = selected || null;
 
   async function addClient() {
     if (!newName.trim() || newCode.length !== 4) return;
