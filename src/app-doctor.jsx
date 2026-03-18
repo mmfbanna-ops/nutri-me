@@ -150,7 +150,6 @@ export default function Dashboard() {
   }
 
   useEffect(()=>{ loadClients(); },[]);
-  useEffect(()=>{ if(view==="overview") loadClients(); },[view]);
 
   const clientObj = selected ? clients.find(c=>c.name===selected.name) : null;
 
