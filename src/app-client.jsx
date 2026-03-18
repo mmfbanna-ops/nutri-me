@@ -573,8 +573,7 @@ function GuestHome({ onLogin }) {
                 <div style={{ flex:1 }}>
                   <div style={{ fontSize:17, fontWeight:900, color:C.text, marginBottom:2, fontFamily:"'Poppins',sans-serif" }}>Dr. Mai ElBanna</div>
                   <div style={{ fontSize:11, color:C.mauve, fontWeight:700, letterSpacing:0.5, marginBottom:10, lineHeight:1.5 }}>
-                    Lecturer of Women's Health Physiotherapy{"
-"}& Clinical Nutrition
+                    Lecturer of Women's Health Physiotherapy & Clinical Nutrition
                   </div>
                   <div style={{ fontSize:12, color:C.sub, fontWeight:500, lineHeight:1.9, marginBottom:10 }}>
                     PhD holder from Cairo University in Women's Health Physiotherapy, with advanced qualifications in clinical nutrition, including a diploma from the American University in Cairo.
