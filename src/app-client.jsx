@@ -1062,7 +1062,10 @@ function MemberHomeTab({ client, onTabChange }) {
       }
       try {
         const logs = await sbGet("daily_logs", "client_name=eq."+client.name+"&date=eq."+TODAY+"&select=data");
-        if (logs && logs.length > 0 && logs[0].data) { setTodayLog(logs[0].data); setCheckedIn(true); return; }
+        if (logs && logs.length > 0 && logs[0].data) {
+          const d = logs[0].data;
+          if (!d.date || d.date === TODAY) { setTodayLog(d); setCheckedIn(true); return; }
+        }
       } catch {}
       try { const r=storage.get("log:"+client.name+":"+TODAY); if(r){ setTodayLog(JSON.parse(r.value)); setCheckedIn(true); } } catch {}
     }
@@ -1105,7 +1108,7 @@ function MemberHomeTab({ client, onTabChange }) {
             ))}
           </div>
           <div style={{ marginTop:8, fontSize:12, color:C.green, fontWeight:700 }}>
-            🗓️ الموعد القادم: {getNextSessionDate(client.sessionDay??0)}
+            🗓️ الموعد القادم: {getNextSessionDate(client.sessionDay!=null?client.sessionDay:0)}
           </div>
         </div>
       )}
@@ -1163,15 +1166,18 @@ function CheckInTab({ client }) {
   useEffect(()=>{
     async function loadLog() {
       try {
-        const rows = await sbGet("daily_logs", "client_name=eq."+client.name+"&date=eq."+TODAY+"&select=data");
-        if (rows && rows.length > 0 && rows[0].data) { setLog(rows[0].data); setAlreadyLogged(true); return; }
+        // Query Supabase for today's log specifically
+        const rows = await sbGet("daily_logs", "client_name=eq."+client.name+"&date=eq."+TODAY+"&select=data,date");
+        if (rows && rows.length > 0 && rows[0].date === TODAY && rows[0].data) {
+          setLog(rows[0].data); setAlreadyLogged(true); return;
+        }
       } catch {}
+      // localStorage fallback - must match TODAY exactly
       try {
-        const r=storage.get("log:"+client.name+":"+TODAY);
-        if(r){
+        const r = storage.get("log:"+client.name+":"+TODAY);
+        if (r) {
           const parsed = JSON.parse(r.value);
-          // Only mark as logged if the saved log is actually from TODAY
-          if(parsed.date === TODAY) { setLog(parsed); setAlreadyLogged(true); }
+          if (parsed && parsed.date === TODAY) { setLog(parsed); setAlreadyLogged(true); }
           else { storage.del("log:"+client.name+":"+TODAY); }
         }
       } catch {}
@@ -1198,7 +1204,7 @@ function CheckInTab({ client }) {
     }
   }
 
-  if (submitted || (alreadyLogged && step===0 && !submitted)) {
+  if (submitted || (alreadyLogged && step===0)) {
     return (
       <div style={wrap}>
         <div style={{ paddingTop:20 }}>
@@ -1282,7 +1288,7 @@ function CheckInTab({ client }) {
               </>
             ) : (
               <div style={{ background:C.peach, borderRadius:10, padding:"10px 14px", fontSize:12, color:C.sub, fontWeight:600, display:"flex", gap:8, alignItems:"center" }}>
-                <span>📅</span> القياسات الأسبوعية بتيجي يوم <strong style={{ color:C.pink }}>{DAYS_AR[client.sessionDay??0]}</strong> بس
+                <span>📅</span> القياسات الأسبوعية بتيجي يوم <strong style={{ color:C.pink }}>{DAYS_AR[client.sessionDay!=null?client.sessionDay:0]}</strong> بس
               </div>
             )}
             <div style={{ marginTop:12 }}>
@@ -1452,23 +1458,23 @@ function CycleTab({ client }) {
         ) : (
           <>
             {/* Current phase hero */}
-            <div style={{ background:phase?.bg, border:`2px solid ${phase?.border}`, borderRadius:24, padding:"22px 20px", marginBottom:14 }}>
+            <div style={{ background:(phase||{}).bg, border:`2px solid ${(phase||{}).border}`, borderRadius:24, padding:"22px 20px", marginBottom:14 }}>
               <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:14 }}>
                 <div>
-                  <div style={{ fontSize:11, color:phase?.color, fontWeight:800, letterSpacing:2, marginBottom:4 }}>CURRENT PHASE</div>
-                  <div style={{ fontSize:26, fontWeight:900, color:phase?.color }}>{phase?.emoji} {phase?.name}</div>
-                  <div style={{ fontSize:12, color:C.sub, fontWeight:500, marginTop:4 }}>{phase?.tagline}</div>
+                  <div style={{ fontSize:11, color:(phase||{}).color, fontWeight:800, letterSpacing:2, marginBottom:4 }}>CURRENT PHASE</div>
+                  <div style={{ fontSize:26, fontWeight:900, color:(phase||{}).color }}>{(phase||{}).emoji} {(phase||{}).name}</div>
+                  <div style={{ fontSize:12, color:C.sub, fontWeight:500, marginTop:4 }}>{(phase||{}).tagline}</div>
                 </div>
                 <div style={{ background:C.white, borderRadius:14, padding:"10px 14px", textAlign:"center" }}>
-                  <div style={{ fontSize:24, fontWeight:900, color:phase?.color }}>{ci.day}</div>
+                  <div style={{ fontSize:24, fontWeight:900, color:(phase||{}).color }}>{ci.day}</div>
                   <div style={{ fontSize:9, color:C.muted }}>/ {cycleLen}</div>
                 </div>
               </div>
-              <div style={{ height:6, borderRadius:99, background:`${phase?.color}25`, overflow:"hidden", marginBottom:10 }}>
-                <div style={{ height:"100%", width:`${(ci.day/cycleLen)*100}%`, background:phase?.color, borderRadius:99 }}/>
+              <div style={{ height:6, borderRadius:99, background:`${(phase||{}).color}25`, overflow:"hidden", marginBottom:10 }}>
+                <div style={{ height:"100%", width:`${(ci.day/cycleLen)*100}%`, background:(phase||{}).color, borderRadius:99 }}/>
               </div>
               <div style={{ display:"flex", justifyContent:"space-between" }}>
-                <div style={{ fontSize:11, color:C.sub, fontWeight:500 }}>{phase?.hormones}</div>
+                <div style={{ fontSize:11, color:C.sub, fontWeight:500 }}>{(phase||{}).hormones}</div>
                 <div style={{ fontSize:11, color:C.green, fontWeight:700 }}>📅 {ci.daysToNext}يوم للدورة القادمة</div>
               </div>
             </div>
@@ -1476,35 +1482,35 @@ function CycleTab({ client }) {
             {/* Phases nav */}
             <div style={{ display:"flex", gap:6, marginBottom:14 }}>
               {CYCLE_PHASES.map(p=>(
-                <div key={p.id} style={{ flex:1, background:p.id===phase?.id?p.bg:C.white, border:`1.5px solid ${p.id===phase?.id?p.color:C.border}`, borderRadius:12, padding:"8px 4px", textAlign:"center" }}>
+                <div key={p.id} style={{ flex:1, background:p.id===(phase||{}).id?p.bg:C.white, border:`1.5px solid ${p.id===(phase||{}).id?p.color:C.border}`, borderRadius:12, padding:"8px 4px", textAlign:"center" }}>
                   <div style={{ fontSize:16 }}>{p.emoji}</div>
-                  <div style={{ fontSize:9, fontWeight:800, color:p.id===phase?.id?p.color:C.muted, marginTop:2 }}>{p.name}</div>
+                  <div style={{ fontSize:9, fontWeight:800, color:p.id===(phase||{}).id?p.color:C.muted, marginTop:2 }}>{p.name}</div>
                 </div>
               ))}
             </div>
 
             {/* Nutrition */}
             <div style={card}>
-              <div style={{ fontSize:13, fontWeight:800, color:phase?.color, marginBottom:12 }}>🥗 تغذية مرحلة {phase?.name}</div>
+              <div style={{ fontSize:13, fontWeight:800, color:(phase||{}).color, marginBottom:12 }}>🥗 تغذية مرحلة {(phase||{}).name}</div>
               <div style={{ marginBottom:10 }}>
                 <div style={{ fontSize:11, fontWeight:800, color:C.green, marginBottom:8 }}>✅ أكلي من:</div>
                 <div style={{ display:"flex", flexWrap:"wrap", gap:6 }}>
-                  {phase?.eat.map((f,i)=><span key={i} style={{ background:C.greenLight, border:`1px solid ${C.greenBorder}`, borderRadius:99, padding:"4px 10px", fontSize:11, color:C.green, fontWeight:600 }}>{f}</span>)}
+                  {(phase||{}).eat.map((f,i)=><span key={i} style={{ background:C.greenLight, border:`1px solid ${C.greenBorder}`, borderRadius:99, padding:"4px 10px", fontSize:11, color:C.green, fontWeight:600 }}>{f}</span>)}
                 </div>
               </div>
               <div style={{ marginBottom:12 }}>
                 <div style={{ fontSize:11, fontWeight:800, color:C.red, marginBottom:8 }}>⚠️ قللي من:</div>
                 <div style={{ display:"flex", flexWrap:"wrap", gap:6 }}>
-                  {phase?.avoid.map((f,i)=><span key={i} style={{ background:C.redLight, border:`1px solid ${C.red}40`, borderRadius:99, padding:"4px 10px", fontSize:11, color:C.red, fontWeight:600 }}>{f}</span>)}
+                  {(phase||{}).avoid.map((f,i)=><span key={i} style={{ background:C.redLight, border:`1px solid ${C.red}40`, borderRadius:99, padding:"4px 10px", fontSize:11, color:C.red, fontWeight:600 }}>{f}</span>)}
                 </div>
               </div>
-              <div style={{ background:phase?.bg, border:`1px solid ${phase?.border}`, borderRadius:12, padding:"10px 14px", fontSize:12, color:phase?.color, fontWeight:600, lineHeight:1.7 }}>💡 {phase?.tip}</div>
+              <div style={{ background:(phase||{}).bg, border:`1px solid ${(phase||{}).border}`, borderRadius:12, padding:"10px 14px", fontSize:12, color:(phase||{}).color, fontWeight:600, lineHeight:1.7 }}>💡 {(phase||{}).tip}</div>
             </div>
 
             {/* Exercise & Selfcare */}
             <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10, marginBottom:14 }}>
-              <div style={card}><div style={{ fontSize:11, color:C.muted, fontWeight:700, marginBottom:6 }}>تمرين مناسب</div><div style={{ fontSize:12, color:C.text, fontWeight:600, lineHeight:1.7 }}>{phase?.exercise}</div></div>
-              <div style={card}><div style={{ fontSize:11, color:C.muted, fontWeight:700, marginBottom:6 }}>عناية بالنفس</div><div style={{ fontSize:12, color:C.text, fontWeight:600, lineHeight:1.7 }}>{phase?.selfcare}</div></div>
+              <div style={card}><div style={{ fontSize:11, color:C.muted, fontWeight:700, marginBottom:6 }}>تمرين مناسب</div><div style={{ fontSize:12, color:C.text, fontWeight:600, lineHeight:1.7 }}>{(phase||{}).exercise}</div></div>
+              <div style={card}><div style={{ fontSize:11, color:C.muted, fontWeight:700, marginBottom:6 }}>عناية بالنفس</div><div style={{ fontSize:12, color:C.text, fontWeight:600, lineHeight:1.7 }}>{(phase||{}).selfcare}</div></div>
             </div>
 
             <button onClick={resetCycle} style={{ width:"100%", padding:"10px 0", borderRadius:12, background:C.bg, border:`1px solid ${C.border}`, color:C.muted, fontSize:12, fontWeight:600, cursor:"pointer" }}>
@@ -2039,7 +2045,7 @@ export default function App() {
           <img src={LOGO_SRC} alt="NM" style={{ background:"white", borderRadius:6, padding:2, width:32, height:32 }}/>
           <div>
             <div className="serif" style={{ fontSize:13, fontWeight:700, color:C.text, lineHeight:1.2 }}>Nutri Me</div>
-            <div style={{ fontSize:9, color:C.pink, fontWeight:700, letterSpacing:1 }}>{client?.name} 🌸</div>
+            <div style={{ fontSize:9, color:C.pink, fontWeight:700, letterSpacing:1 }}>{(client||{}).name} 🌸</div>
           </div>
         </div>
         <button onClick={logout} style={{ background:C.peach, border:`1px solid #F0D8CC`, borderRadius:10, color:C.sub, padding:"7px 14px", fontSize:11, fontWeight:700, cursor:"pointer" }}>خروج ↩</button>
