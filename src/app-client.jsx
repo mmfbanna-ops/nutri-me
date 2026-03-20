@@ -398,6 +398,7 @@ function MemberNav({ active, onChange }) {
     { id:"checkin", icon:"📋", label:"يومي" },
     { id:"cycle",   icon:"🌙", label:"دورتي" },
     { id:"tracker", icon:"🧬", label:"الأعراض" },
+    { id:"library", icon:"📚", label:"مكتبة" },
     { id:"chat",    icon:"💬", label:"الدكتورة" },
   ];
   return (
@@ -416,6 +417,86 @@ function MemberNav({ active, onChange }) {
 // ─────────────────────────────────────────────
 //  GUEST HOME
 // ─────────────────────────────────────────────
+
+// ── HORMONE QUIZ ──
+function QuizSection({ onLogin }) {
+  const [step, setStep] = useState(0);
+  const [answers, setAnswers] = useState({});
+  const [result, setResult] = useState(null);
+
+  const questions = [
+    { q:"كيف دورتك الشهرية؟", key:"cycle", options:[{l:"منتظمة ✅",v:0},{l:"غير منتظمة أحياناً 😐",v:1},{l:"غير منتظمة دايماً ⚠️",v:2},{l:"مش بيجي 🔴",v:3}] },
+    { q:"مستوى طاقتك خلال اليوم؟", key:"energy", options:[{l:"ممتاز ⚡",v:0},{l:"مقبول 🙂",v:1},{l:"تعب مزمن 😴",v:2},{l:"إرهاق شديد 🔴",v:3}] },
+    { q:"عندك أعراض PCOS؟", key:"pcos", options:[{l:"لأ ✅",v:0},{l:"شعر زائد بس 🤔",v:1},{l:"حبوب + شعر زائد ⚠️",v:2},{l:"مشخصة PCOS 🔴",v:3}] },
+    { q:"وزنك بيتغير بسهولة؟", key:"weight", options:[{l:"متحكمة فيه ✅",v:0},{l:"صعب شوية 🙂",v:1},{l:"صعب جداً ⚠️",v:2},{l:"بيزيد وما ينزلش 🔴",v:3}] },
+    { q:"مزاجك وقلقك؟", key:"mood", options:[{l:"مستقر ✅",v:0},{l:"تقلبات خفيفة 🙂",v:1},{l:"تقلبات كتير ⚠️",v:2},{l:"قلق/اكتئاب مزمن 🔴",v:3}] },
+  ];
+
+  function calcResult() {
+    const total = Object.values(answers).reduce((a,b)=>a+b,0);
+    if (total <= 3) return { level:"متوازنة هرمونياً 🌟", color:C.green, bg:C.greenLight, border:C.greenBorder, msg:"جسمك في توازن ممتاز! استمري على نمط حياتك الصحي مع متابعة دورية.", plan:"متابعة وقائية — شهر واحد" };
+    if (total <= 7) return { level:"خلل هرموني خفيف 🌙", color:C.gold, bg:C.goldLight, border:"#E8C87A", msg:"في بعض الاختلال الهرموني اللي يحتاج انتباه. خطة التغذية المناسبة هتساعدك تتوازني.", plan:"خطة تصحيح — شهر إلى شهرين" };
+    return { level:"خلل هرموني واضح ⚠️", color:C.red, bg:C.redLight, border:`${C.red}40`, msg:"جسمك محتاج تدخل تغذوي متخصص. Dr. Mai هتعمل خطة علاجية مخصصة لحالتك.", plan:"برنامج علاجي — شهرين إلى 3 أشهر" };
+  }
+
+  if (result) return (
+    <div className="fade-up" style={{ ...wrap, paddingTop:20 }}>
+      <div style={{ ...card, textAlign:"center", background:result.bg, border:`2px solid ${result.border}`, marginBottom:16 }}>
+        <div style={{ fontSize:48, marginBottom:12 }}>🧬</div>
+        <div style={{ fontSize:11, color:result.color, fontWeight:700, letterSpacing:2, marginBottom:8 }}>نتيجة اختبارك</div>
+        <div style={{ fontSize:22, fontWeight:900, color:result.color, marginBottom:12 }}>{result.level}</div>
+        <div style={{ fontSize:13, color:C.sub, fontWeight:500, lineHeight:1.8, marginBottom:16 }}>{result.msg}</div>
+        <div style={{ background:"white", borderRadius:12, padding:"12px 16px", marginBottom:16 }}>
+          <div style={{ fontSize:11, color:C.muted, fontWeight:700, marginBottom:4 }}>الخطة المقترحة لك</div>
+          <div style={{ fontSize:14, fontWeight:800, color:result.color }}>{result.plan}</div>
+        </div>
+        <button onClick={onLogin} style={{ width:"100%", padding:"14px 0", borderRadius:14, background:`linear-gradient(135deg,${C.pink},${C.mauve})`, border:"none", color:"white", fontSize:14, fontWeight:800, cursor:"pointer", marginBottom:10 }}>
+          🌸 ابدأي خطتك المخصصة
+        </button>
+        <button onClick={()=>{setStep(0);setAnswers({});setResult(null);}} style={{ background:"none", border:"none", color:C.muted, fontSize:12, fontWeight:600, cursor:"pointer" }}>
+          إعادة الاختبار
+        </button>
+      </div>
+    </div>
+  );
+
+  const q = questions[step];
+  return (
+    <div className="fade-up">
+      <div style={{ textAlign:"center", marginBottom:20 }}>
+        <div style={{ fontSize:13, color:C.mauve, fontWeight:700, letterSpacing:2, marginBottom:6 }}>HORMONE QUIZ</div>
+        <h2 style={{ fontSize:22, fontWeight:900, color:C.text, margin:"0 0 8px" }}>اختبري وضعك الهرموني 🧬</h2>
+        <p style={{ fontSize:13, color:C.sub }}>5 أسئلة فقط — نتيجة فورية</p>
+      </div>
+
+      {/* Progress */}
+      <div style={{ display:"flex", gap:4, marginBottom:20 }}>
+        {questions.map((_,i)=>(
+          <div key={i} style={{ flex:1, height:4, borderRadius:99, background:i<=step?C.pink:C.borderSoft, transition:"background .3s" }}/>
+        ))}
+      </div>
+
+      <div style={{ ...card, marginBottom:16 }}>
+        <div style={{ fontSize:11, color:C.muted, fontWeight:700, marginBottom:10 }}>سؤال {step+1} من {questions.length}</div>
+        <div style={{ fontSize:17, fontWeight:800, color:C.text, marginBottom:20, lineHeight:1.5 }}>{q.q}</div>
+        <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
+          {q.options.map((o,i)=>(
+            <button key={i} onClick={()=>{
+              const newA = {...answers, [q.key]:o.v};
+              setAnswers(newA);
+              if (step < questions.length-1) { setStep(s=>s+1); }
+              else { setResult(calcResult()); }
+            }} style={{ padding:"13px 16px", borderRadius:12, border:`1.5px solid ${answers[q.key]===o.v?C.pink:C.border}`, background:answers[q.key]===o.v?C.blush:C.bg, color:answers[q.key]===o.v?C.pink:C.text, fontSize:13, fontWeight:700, cursor:"pointer", textAlign:"right", transition:"all .15s" }}>
+              {o.l}
+            </button>
+          ))}
+        </div>
+      </div>
+      {step > 0 && <button onClick={()=>setStep(s=>s-1)} style={{ background:"none", border:"none", color:C.muted, fontSize:13, fontWeight:600, cursor:"pointer" }}>← السابق</button>}
+    </div>
+  );
+}
+
 function GuestHome({ onLogin }) {
   const [guestTab, setGuestTab] = useState("home");
   const [openArticle, setOpenArticle] = useState(null);
@@ -485,10 +566,14 @@ function GuestHome({ onLogin }) {
   }
 
   const GUEST_TABS = [
-    { id:"home", icon:"🏠", label:"Home" },
-    { id:"articles", icon:"📖", label:"Articles" },
-    { id:"recipes", icon:"🥗", label:"Recipes" },
-    { id:"faq", icon:"❓", label:"FAQ" },
+    { id:"home",     icon:"🏠", label:"Home" },
+    { id:"packages", icon:"💎", label:"الباقات" },
+    { id:"services", icon:"🩺", label:"خدماتنا" },
+    { id:"quiz",     icon:"🧬", label:"اختبري" },
+    { id:"stories",  icon:"⭐", label:"قصص" },
+    { id:"articles", icon:"📖", label:"مقالات" },
+    { id:"recipes",  icon:"🥗", label:"وصفات" },
+    { id:"faq",      icon:"❓", label:"FAQ" },
   ];
 
   return (
@@ -616,14 +701,209 @@ function GuestHome({ onLogin }) {
               <div style={{ fontSize:13, color:C.sub, fontWeight:500, lineHeight:1.8, marginBottom:16 }}>
                 ابدأي رحلتك مع متابعة شخصية<br/>خطة مخصصة لهرموناتك بالكامل
               </div>
-              <button onClick={onLogin} style={{ background:`linear-gradient(135deg,${C.pink},${C.mauve})`, border:"none", borderRadius:14, color:"white", padding:"14px 28px", fontSize:14, fontWeight:800, cursor:"pointer" }}>
-                Start your personalized follow-up →
-              </button>
+              <div style={{ display:"flex", gap:10, justifyContent:"center", flexWrap:"wrap" }}>
+                <button onClick={onLogin} style={{ background:`linear-gradient(135deg,${C.pink},${C.mauve})`, border:"none", borderRadius:14, color:"white", padding:"13px 24px", fontSize:13, fontWeight:800, cursor:"pointer" }}>
+                  ابدأي رحلتك 🌸
+                </button>
+                <a href="https://wa.me/201000423752" style={{ display:"inline-block", background:"#25D366", border:"none", borderRadius:14, color:"white", padding:"13px 24px", fontSize:13, fontWeight:800, textDecoration:"none" }}>
+                  واتساب 💬
+                </a>
+              </div>
             </div>
           </div>
         )}
 
         {/* ARTICLES TAB */}
+
+
+        {/* ── QUIZ TAB ── */}
+        {guestTab==="quiz" && (
+          <QuizSection onLogin={onLogin} />
+        )}
+
+        {/* ── SUCCESS STORIES TAB ── */}
+        {guestTab==="stories" && (
+          <div className="fade-up">
+            <div style={{ textAlign:"center", marginBottom:24 }}>
+              <div style={{ fontSize:13, color:C.mauve, fontWeight:700, letterSpacing:2, marginBottom:6 }}>SUCCESS STORIES</div>
+              <h2 style={{ fontSize:24, fontWeight:900, color:C.text, margin:"0 0 8px" }}>قصص نجاح 🌸</h2>
+              <p style={{ fontSize:13, color:C.sub, fontWeight:500 }}>عملاء حقيقيات — نتائج حقيقية</p>
+            </div>
+            {[
+              { name:"سوسو", months:1, result:"فقدت 5 كجم وانتظمت دورتها", before:"كانت تعاني من PCOS وتقلبات هرمونية شديدة", emoji:"🌟", tag:"PCOS" },
+              { name:"مريم", months:2, result:"تحسّن مستوى الإنسولين بشكل ملحوظ", before:"مقاومة إنسولين وتعب مزمن", emoji:"💪", tag:"Insulin" },
+              { name:"إسراء", months:1, result:"انتظام الدورة وتقليل آلام الطمث 80%", before:"دورة غير منتظمة منذ سنوات", emoji:"🌙", tag:"Cycle" },
+              { name:"نورين", months:2, result:"فقدان 8 كجم مع توازن هرموني كامل", before:"صعوبة في إنقاص الوزن رغم الحمية", emoji:"⚡", tag:"Weight" },
+            ].map((s,i)=>(
+              <div key={i} style={{ ...card, marginBottom:14, background:"linear-gradient(135deg,#FDFAF8,#F5EBF8)" }}>
+                <div style={{ display:"flex", gap:12, alignItems:"center", marginBottom:12 }}>
+                  <div style={{ width:48, height:48, borderRadius:"50%", background:`linear-gradient(135deg,${C.pink},${C.mauve})`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:22, flexShrink:0 }}>{s.emoji}</div>
+                  <div>
+                    <div style={{ fontSize:15, fontWeight:900, color:C.text }}>{s.name}</div>
+                    <div style={{ display:"flex", gap:6, marginTop:3 }}>
+                      <span style={{ background:C.blush, color:C.pink, fontSize:10, fontWeight:700, padding:"2px 8px", borderRadius:99 }}>{s.tag}</span>
+                      <span style={{ background:C.greenLight, color:C.green, fontSize:10, fontWeight:700, padding:"2px 8px", borderRadius:99 }}>{s.months} شهر</span>
+                    </div>
+                  </div>
+                </div>
+                <div style={{ background:C.redLight, borderRadius:10, padding:"10px 12px", marginBottom:10, fontSize:12, color:C.sub, fontWeight:500 }}>
+                  قبل: {s.before}
+                </div>
+                <div style={{ background:C.greenLight, border:`1px solid ${C.greenBorder}`, borderRadius:10, padding:"10px 12px", fontSize:13, color:C.green, fontWeight:700 }}>
+                  ✅ {s.result}
+                </div>
+              </div>
+            ))}
+            <div style={{ ...card, textAlign:"center", background:"linear-gradient(135deg,#6B2FA0,#C2607A)", border:"none" }}>
+              <div style={{ fontSize:24, marginBottom:8 }}>🌸</div>
+              <div style={{ fontSize:16, fontWeight:900, color:"white", marginBottom:6 }}>ابدأي قصتك مع Dr. Mai</div>
+              <div style={{ fontSize:12, color:"rgba(255,255,255,0.85)", marginBottom:16 }}>انضمي لمئات العملاء اللي غيّرن حياتهن</div>
+              <button onClick={onLogin} style={{ background:"rgba(255,255,255,0.95)", border:"none", borderRadius:14, color:C.pink, padding:"13px 28px", fontSize:14, fontWeight:900, cursor:"pointer" }}>
+                ابدأي رحلتك الآن ←
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* PACKAGES TAB */}
+        {guestTab==="packages" && (
+          <div className="fade-up">
+            <div style={{ textAlign:"center", marginBottom:24 }}>
+              <div style={{ fontSize:13, color:C.mauve, fontWeight:700, letterSpacing:2, marginBottom:6, textTransform:"uppercase" }}>Our Plans</div>
+              <h2 style={{ fontSize:24, fontWeight:900, color:C.text, margin:"0 0 8px" }}>اختاري باقتك</h2>
+              <p style={{ fontSize:13, color:C.sub, fontWeight:500 }}>خطة مخصصة لهرموناتك وصحتك</p>
+            </div>
+
+            {/* Package 1 - 1 Month */}
+            <div style={{ ...card, border:`2px solid ${C.border}`, marginBottom:14, position:"relative" }}>
+              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:16 }}>
+                <div>
+                  <div style={{ fontSize:11, color:C.mauve, fontWeight:700, letterSpacing:1, marginBottom:4 }}>PLAN 01</div>
+                  <div style={{ fontSize:20, fontWeight:900, color:C.text }}>شهر متابعة</div>
+                </div>
+                <div style={{ textAlign:"right" }}>
+                  <div style={{ fontSize:28, fontWeight:900, color:C.pink }}>4</div>
+                  <div style={{ fontSize:11, color:C.muted, fontWeight:600 }}>جلسات</div>
+                </div>
+              </div>
+              {["✓ 4 جلسات أسبوعية متابعة","✓ خطة غذائية مخصصة","✓ متابعة على الواتساب","✓ تقييم هرموني أولي"].map((f,i)=>(
+                <div key={i} style={{ fontSize:13, color:C.sub, fontWeight:600, padding:"6px 0", borderBottom:i<3?`1px solid ${C.borderSoft}`:"none", display:"flex", gap:8 }}>
+                  <span style={{ color:C.green }}>✓</span>{f.replace("✓ ","")}
+                </div>
+              ))}
+              <button onClick={onLogin} style={{ width:"100%", marginTop:16, padding:"13px 0", borderRadius:14, background:C.bg, border:`2px solid ${C.pink}`, color:C.pink, fontSize:14, fontWeight:800, cursor:"pointer" }}>
+                ابدأي الآن ←
+              </button>
+            </div>
+
+            {/* Package 2 - 2 Months - FEATURED */}
+            <div style={{ ...card, border:`2px solid ${C.pink}`, marginBottom:14, position:"relative", background:"linear-gradient(135deg,#FDF0F4,#F5EBF8)" }}>
+              <div style={{ position:"absolute", top:-12, left:"50%", transform:"translateX(-50%)", background:`linear-gradient(135deg,${C.pink},${C.mauve})`, color:"white", fontSize:11, fontWeight:800, padding:"4px 16px", borderRadius:99 }}>
+                الأكثر طلباً ⭐
+              </div>
+              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:16, marginTop:8 }}>
+                <div>
+                  <div style={{ fontSize:11, color:C.mauve, fontWeight:700, letterSpacing:1, marginBottom:4 }}>PLAN 02</div>
+                  <div style={{ fontSize:20, fontWeight:900, color:C.text }}>شهرين متابعة</div>
+                </div>
+                <div style={{ textAlign:"right" }}>
+                  <div style={{ fontSize:28, fontWeight:900, color:C.pink }}>8</div>
+                  <div style={{ fontSize:11, color:C.muted, fontWeight:600 }}>جلسات</div>
+                </div>
+              </div>
+              {["4 جلسات شهرياً","خطة غذائية محدّثة كل شهر","متابعة يومية واتساب","تقييم هرموني + تحليل دورة","تعديل الخطة حسب التقدم"].map((f,i)=>(
+                <div key={i} style={{ fontSize:13, color:C.sub, fontWeight:600, padding:"6px 0", borderBottom:i<4?`1px solid ${C.borderSoft}`:"none", display:"flex", gap:8 }}>
+                  <span style={{ color:C.green }}>✓</span>{f}
+                </div>
+              ))}
+              <button onClick={onLogin} style={{ width:"100%", marginTop:16, padding:"13px 0", borderRadius:14, background:`linear-gradient(135deg,${C.pink},${C.mauve})`, border:"none", color:"white", fontSize:14, fontWeight:800, cursor:"pointer", boxShadow:`0 6px 20px ${C.shadow}` }}>
+                ابدأي الآن ←
+              </button>
+            </div>
+
+            {/* Package 3 - 3 Months */}
+            <div style={{ ...card, border:`2px solid ${C.mauve}`, marginBottom:20 }}>
+              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:16 }}>
+                <div>
+                  <div style={{ fontSize:11, color:C.mauve, fontWeight:700, letterSpacing:1, marginBottom:4 }}>PLAN 03</div>
+                  <div style={{ fontSize:20, fontWeight:900, color:C.text }}>3 أشهر متابعة</div>
+                </div>
+                <div style={{ textAlign:"right" }}>
+                  <div style={{ fontSize:28, fontWeight:900, color:C.mauve }}>12</div>
+                  <div style={{ fontSize:11, color:C.muted, fontWeight:600 }}>جلسة</div>
+                </div>
+              </div>
+              {["4 جلسات شهرياً","خطة غذائية شاملة ومحدّثة","متابعة يومية واتساب","تحليل هرموني كامل","تعديل مستمر حسب التقدم","دعم نفسي وتغذوي متكامل"].map((f,i)=>(
+                <div key={i} style={{ fontSize:13, color:C.sub, fontWeight:600, padding:"6px 0", borderBottom:i<5?`1px solid ${C.borderSoft}`:"none", display:"flex", gap:8 }}>
+                  <span style={{ color:C.mauve }}>✓</span>{f}
+                </div>
+              ))}
+              <button onClick={onLogin} style={{ width:"100%", marginTop:16, padding:"13px 0", borderRadius:14, background:`linear-gradient(135deg,${C.mauve},${C.lavender})`, border:"none", color:"white", fontSize:14, fontWeight:800, cursor:"pointer" }}>
+                ابدأي الآن ←
+              </button>
+            </div>
+
+            {/* WhatsApp CTA */}
+            <div style={{ ...card, textAlign:"center", background:"linear-gradient(135deg,#E8F8F0,#D4F5E4)", border:`1.5px solid ${C.greenBorder}` }}>
+              <div style={{ fontSize:28, marginBottom:8 }}>💬</div>
+              <div style={{ fontSize:15, fontWeight:800, color:"#1A5C3A", marginBottom:6 }}>مش عارفة تختاري؟</div>
+              <div style={{ fontSize:13, color:"#2D7A50", fontWeight:500, marginBottom:14 }}>تواصلي مع Dr. Mai على واتساب وهتساعدك تختاري الباقة المناسبة</div>
+              <a href="https://wa.me/201000423752" style={{ display:"inline-block", background:"#25D366", border:"none", borderRadius:14, color:"white", padding:"13px 28px", fontSize:14, fontWeight:800, textDecoration:"none" }}>
+                واتساب مباشر 💬
+              </a>
+            </div>
+          </div>
+        )}
+
+        {/* SERVICES TAB */}
+        {guestTab==="services" && (
+          <div className="fade-up">
+            <div style={{ textAlign:"center", marginBottom:24 }}>
+              <div style={{ fontSize:13, color:C.mauve, fontWeight:700, letterSpacing:2, marginBottom:6, textTransform:"uppercase" }}>What We Offer</div>
+              <h2 style={{ fontSize:24, fontWeight:900, color:C.text, margin:"0 0 8px" }}>خدماتنا</h2>
+              <p style={{ fontSize:13, color:C.sub, fontWeight:500 }}>رعاية متكاملة لصحتك الهرمونية</p>
+            </div>
+
+            {[
+              { icon:"🔬", title:"PCOS & تكيس المبايض", color:C.pink, bg:"#FFF0F4", border:C.rose,
+                desc:"خطة علاجية مخصصة لتنظيم الهرمونات، تحسين الإباضة، وتقليل أعراض PCOS من خلال التغذية العلاجية.",
+                points:["تنظيم مستوى الأندروجين","تحسين حساسية الإنسولين","دعم الخصوبة الطبيعية","تقليل الشعر الزائد والأعراض"] },
+              { icon:"🩸", title:"مقاومة الإنسولين", color:C.gold, bg:"#FFFBF0", border:"#E8C87A",
+                desc:"برنامج متخصص لتحسين استجابة الخلايا للإنسولين وتنظيم مستوى السكر في الدم.",
+                points:["خطة غذائية منخفضة الجلايسيمي","تحسين حساسية الخلايا","إدارة الوزن بفعالية","تقليل خطر السكري"] },
+              { icon:"🌙", title:"صحة الدورة الشهرية", color:C.mauve, bg:"#F5EBF8", border:C.lavender,
+                desc:"متابعة متخصصة لتنظيم الدورة وتخفيف الأعراض المصاحبة لها من خلال التغذية الموافقة للدورة.",
+                points:["تنظيم الدورة الشهرية","تقليل آلام الطمث","تغذية موافقة للمراحل الأربع","دعم التوازن الهرموني"] },
+              { icon:"⚖️", title:"إدارة الوزن الهرموني", color:C.green, bg:C.greenLight, border:C.greenBorder,
+                desc:"برنامج لإدارة الوزن يراعي الحالة الهرمونية والاستقلابية لكل عميلة بشكل فردي.",
+                points:["تقييم هرموني شامل","خطة سعرات مخصصة","دعم الاستقلاب","متابعة أسبوعية للتقدم"] },
+            ].map((s,i)=>(
+              <div key={i} style={{ ...card, background:s.bg, border:`1.5px solid ${s.border}`, marginBottom:14 }}>
+                <div style={{ display:"flex", gap:14, alignItems:"flex-start", marginBottom:12 }}>
+                  <div style={{ fontSize:32, flexShrink:0 }}>{s.icon}</div>
+                  <div>
+                    <div style={{ fontSize:16, fontWeight:900, color:s.color, marginBottom:4 }}>{s.title}</div>
+                    <div style={{ fontSize:12, color:C.sub, fontWeight:500, lineHeight:1.7 }}>{s.desc}</div>
+                  </div>
+                </div>
+                <div style={{ display:"flex", flexWrap:"wrap", gap:6 }}>
+                  {s.points.map((p,j)=>(
+                    <div key={j} style={{ background:"white", border:`1px solid ${s.border}`, borderRadius:8, padding:"5px 10px", fontSize:11, color:s.color, fontWeight:700 }}>✓ {p}</div>
+                  ))}
+                </div>
+              </div>
+            ))}
+
+            {/* WhatsApp button */}
+            <div style={{ ...card, textAlign:"center", background:"linear-gradient(135deg,#E8F8F0,#D4F5E4)", border:`1.5px solid ${C.greenBorder}` }}>
+              <div style={{ fontSize:15, fontWeight:800, color:"#1A5C3A", marginBottom:6 }}>ابدأي رحلتك مع Dr. Mai 🌸</div>
+              <div style={{ fontSize:13, color:"#2D7A50", fontWeight:500, marginBottom:14 }}>تواصلي معها مباشرة على واتساب</div>
+              <a href="https://wa.me/201000423752" style={{ display:"inline-block", background:"#25D366", border:"none", borderRadius:14, color:"white", padding:"13px 28px", fontSize:14, fontWeight:800, textDecoration:"none" }}>
+                💬 تواصلي على واتساب
+              </a>
+            </div>
+          </div>
+        )}
         {guestTab==="articles" && (
           <div className="fade-up">
             <div className="serif" style={{ fontSize:22, fontWeight:700, color:C.text, marginBottom:4 }}>Hormone Health</div>
@@ -1301,6 +1581,127 @@ function TrackerTab({ client }) {
   );
 }
 
+
+// ─────────────────────────────────────────────
+//  LIBRARY TAB
+// ─────────────────────────────────────────────
+function LibraryTab({ client }) {
+  const [openItem, setOpenItem] = useState(null);
+  const [activeSection, setActiveSection] = useState("articles");
+
+  const LIBRARY_ITEMS = [
+    { id:1, type:"article", icon:"🔬", category:"PCOS", title:"تكيس المبايض والتغذية", time:"5 دقائق",
+      summary:"كيف تؤثر التغذية على أعراض PCOS وكيف تتحكمي فيها من خلال طعامك اليومي",
+      body:"تكيس المبايض (PCOS) من أكثر الاضطرابات الهرمونية شيوعاً عند النساء. التغذية الصحيحة تلعب دوراً محورياً في التحكم بالأعراض.\n\nالأطعمة التي تساعد:\n• الخضروات الورقية والبروكلي\n• البروتين الخالي من الدهون\n• الدهون الصحية (أفوكادو، زيت زيتون)\n• الألياف من الخضار والبقوليات\n\nالأطعمة التي تزيد الأعراض:\n• السكريات المضافة والمعالجة\n• الدقيق الأبيض والكربوهيدرات البسيطة\n• الأطعمة المقلية والمعالجة\n• الكافيين الزائد",
+      tips:["تناولي 3 وجبات منتظمة + سناك صحي","اشربي 2-3 لتر ماء يومياً","قللي السكريات المضافة تدريجياً","أضيفي البروتين لكل وجبة"] },
+    { id:2, type:"article", icon:"🩸", category:"الإنسولين", title:"مقاومة الإنسولين خطوة بخطوة", time:"4 دقائق",
+      summary:"افهمي مقاومة الإنسولين وكيف تتغلبي عليها بالتغذية الصحيحة",
+      body:"مقاومة الإنسولين تعني أن خلايا جسمك لا تستجيب بشكل صحيح للإنسولين، مما يرفع مستوى السكر في الدم.\n\nعلامات مقاومة الإنسولين:\n• تعب بعد الوجبات\n• رغبة شديدة في السكريات\n• صعوبة في خسارة الوزن\n• تجمع الدهون في البطن\n\nاستراتيجيات غذائية:\n• الصيام المتقطع 14-16 ساعة\n• تقليل الكربوهيدرات المكررة\n• زيادة الأوميغا 3 والمغنيسيوم\n• تمرين بعد الوجبات 15 دقيقة",
+      tips:["ابدأي يومك ببروتين لا سكريات","تجنبي العصائر والمشروبات المحلاة","المشي 15 دقيقة بعد الأكل مفيد جداً","نومي 7-8 ساعات لتحسين الإنسولين"] },
+    { id:3, type:"article", icon:"🌙", category:"الدورة", title:"تغذية كل مرحلة من الدورة", time:"6 دقائق",
+      summary:"خطة غذائية مخصصة لكل مرحلة من مراحل دورتك الشهرية الأربع",
+      body:"جسمك يتغير هرمونياً طوال الشهر — وتغذيتك لازم تتغير معاه!\n\nالمرحلة الطمثية (أيام 1-5):\nركزي على الحديد (لحوم حمراء، عدس، سبانخ) والمغنيسيوم لتقليل التشنجات\n\nالمرحلة الجريبية (أيام 6-13):\nوقت رائع للبروتين والخضروات الطازجة. جسمك يبني ويجدد\n\nمرحلة الإباضة (أيام 14-16):\nأوج الطاقة — استغليه في التمارين والأنشطة المكثفة\n\nالمرحلة الأصفرية (أيام 17-28):\nقللي الكافيين وزيدي الكالسيوم والفيتامين B6 لتقليل PMS",
+      tips:["تتبعي دورتك لتعرفي في أي مرحلة أنتِ","الشوكولاتة الداكنة 70%+ مفيدة أيام الطمث","قللي الملح قبل الدورة لتقليل الانتفاخ","الزنجبيل والكركم يقللان الألم طبيعياً"] },
+    { id:4, type:"article", icon:"✨", category:"الهرمونات", title:"أطعمة تعزز صحتك الهرمونية", time:"3 دقائق",
+      summary:"قائمة بأهم الأطعمة التي تدعم التوازن الهرموني وتحسن صحتك العامة",
+      body:"الهرمونات تتأثر بشكل مباشر بما تأكلينه. إليكِ أهم الأطعمة الداعمة للتوازن الهرموني:\n\nأطعمة إستروجين صحي:\n• بذور الكتان (ملعقة يومياً)\n• برعم البروكلي\n• التوت الأزرق والرمان\n\nأطعمة داعمة للبروجستيرون:\n• المكسرات والبذور\n• الخضروات الورقية\n• البيض والدواجن\n\nمضادات الالتهاب:\n• الكركم مع الفلفل الأسود\n• زيت الزيتون البكر\n• سمك السلمون والسردين",
+      tips:["بذرة الكتان يومياً تدعم الإستروجين الصحي","تجنبي البلاستيك في تخزين الطعام","العضوي أفضل للخضروات الأكثر استهلاكاً","الطبخ بالأواني الحديد يزيد الحديد في الطعام"] },
+    { id:5, type:"ebook", icon:"📘", category:"دليل", title:"دليل PCOS الشامل", time:"دليل كامل",
+      summary:"دليلك الكامل لفهم PCOS والتعايش معه بشكل صحي وسعيد",
+      body:"هذا الدليل الشامل يغطي كل ما تحتاجين معرفته عن PCOS:\n\n• ما هو PCOS وأسبابه\n• الفحوصات المطلوبة\n• الخيارات العلاجية\n• التغذية المناسبة\n• التمارين الموصى بها\n• الصحة النفسية والعاطفية\n• الخصوبة والحمل مع PCOS",
+      tips:["راجعي طبيبك لتأكيد التشخيص","التغذية والنمط الحياتي أساس العلاج","الدعم النفسي جزء مهم من الرحلة","الصبر والاستمرار مفتاح النجاح"] },
+    { id:6, type:"ebook", icon:"📗", category:"دليل", title:"خطة الـ 30 يوم لتوازن الهرمونات", time:"دليل عملي",
+      summary:"خطة عملية يوم بيوم لتحسين توازنك الهرموني خلال شهر واحد",
+      body:"الأسبوع الأول: التخلص من المحفزات\n• أزيلي السكريات المضافة\n• قللي الكافيين تدريجياً\n• ابدأي بتتبع دورتك\n\nالأسبوع الثاني: بناء العادات\n• 3 وجبات منتظمة يومياً\n• 8 أكواب ماء\n• نوم منتظم 7-8 ساعات\n\nالأسبوع الثالث: التعمق\n• أضيفي بذور الكتان والكركم\n• مشي 30 دقيقة يومياً\n• تمارين تنفس للإجهاد\n\nالأسبوع الرابع: التثبيت\n• راجعي تحسناتك\n• عدلي ما يحتاج تعديل\n• استمري على ما نجح",
+      tips:["دوّني تغيراتك يومياً","لا تتوقعي نتائج فورية - الجسم يحتاج وقت","اطلبي الدعم من Dr. Mai في أي وقت","احتفلي بكل تقدم صغير"] },
+  ];
+
+  const articles = LIBRARY_ITEMS.filter(x=>x.type==="article");
+  const ebooks = LIBRARY_ITEMS.filter(x=>x.type==="ebook");
+  const current = activeSection==="articles" ? articles : ebooks;
+
+  if (openItem) {
+    const item = LIBRARY_ITEMS.find(x=>x.id===openItem);
+    return (
+      <div style={wrap}>
+        <style>{FONT}</style>
+        <div style={{ paddingTop:20 }}>
+          <button onClick={()=>setOpenItem(null)} style={{ background:C.blush, border:`1px solid ${C.border}`, borderRadius:10, padding:"8px 16px", fontSize:13, fontWeight:700, color:C.sub, cursor:"pointer", marginBottom:20 }}>← رجوع</button>
+          <div style={{ ...card, padding:"24px 20px" }}>
+            <div style={{ fontSize:48, textAlign:"center", marginBottom:12 }}>{item.icon}</div>
+            <div style={{ display:"flex", gap:8, marginBottom:12, justifyContent:"center" }}>
+              <span style={{ background:C.blush, border:`1px solid ${C.border}`, borderRadius:99, padding:"4px 12px", fontSize:11, color:C.pink, fontWeight:700 }}>{item.category}</span>
+              <span style={{ background:C.bg, border:`1px solid ${C.border}`, borderRadius:99, padding:"4px 12px", fontSize:11, color:C.muted, fontWeight:600 }}>⏱ {item.time}</span>
+            </div>
+            <h2 style={{ fontSize:20, fontWeight:900, color:C.text, marginBottom:12, lineHeight:1.5, textAlign:"center" }}>{item.title}</h2>
+            <p style={{ fontSize:14, color:C.sub, fontWeight:500, lineHeight:2, marginBottom:20, whiteSpace:"pre-line" }}>{item.body}</p>
+            <div style={{ background:C.greenLight, border:`1px solid ${C.greenBorder}`, borderRadius:14, padding:"14px 16px", marginBottom:24 }}>
+              <div style={{ fontSize:12, fontWeight:800, color:C.green, marginBottom:10 }}>💡 نصائح عملية</div>
+              {item.tips.map((t,i)=>(
+                <div key={i} style={{ fontSize:13, color:C.text, fontWeight:600, padding:"5px 0", display:"flex", gap:8 }}>
+                  <span style={{ color:C.green, flexShrink:0 }}>✓</span>{t}
+                </div>
+              ))}
+            </div>
+            <a href="https://wa.me/201000423752" style={{ display:"block", width:"100%", padding:"13px 0", borderRadius:14, background:"#25D366", border:"none", color:"white", fontSize:14, fontWeight:800, cursor:"pointer", textAlign:"center", textDecoration:"none", boxSizing:"border-box" }}>
+              💬 اسأليني عن هذا الموضوع
+            </a>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={wrap}>
+      <div style={{ paddingTop:20 }}>
+        <div style={{ marginBottom:20 }}>
+          <h2 style={{ fontSize:22, fontWeight:900, color:C.text, marginBottom:4 }}>📚 المكتبة العلمية</h2>
+          <p style={{ fontSize:13, color:C.sub, fontWeight:500 }}>محتوى علمي مخصص لصحتك الهرمونية</p>
+        </div>
+
+        {/* Section toggle */}
+        <div style={{ display:"flex", gap:8, marginBottom:20 }}>
+          {[{id:"articles",label:"📖 مقالات"},{id:"ebooks",label:"📘 أدلة وكتب"}].map(s=>(
+            <button key={s.id} onClick={()=>setActiveSection(s.id)}
+              style={{ flex:1, padding:"10px 0", borderRadius:12, fontSize:13, fontWeight:800, cursor:"pointer",
+                background:activeSection===s.id?`linear-gradient(135deg,${C.pink},${C.mauve})`:C.bg,
+                border:activeSection===s.id?"none":`1.5px solid ${C.border}`,
+                color:activeSection===s.id?"white":C.muted }}>
+              {s.label}
+            </button>
+          ))}
+        </div>
+
+        {current.map(item=>(
+          <div key={item.id} style={{ ...card, cursor:"pointer" }} onClick={()=>setOpenItem(item.id)}>
+            <div style={{ display:"flex", gap:14, alignItems:"center" }}>
+              <div style={{ fontSize:36, flexShrink:0 }}>{item.icon}</div>
+              <div style={{ flex:1 }}>
+                <div style={{ display:"flex", gap:6, marginBottom:6 }}>
+                  <span style={{ background:C.blush, border:`1px solid ${C.border}`, borderRadius:99, padding:"3px 10px", fontSize:10, color:C.pink, fontWeight:700 }}>{item.category}</span>
+                  <span style={{ background:C.bg, border:`1px solid ${C.border}`, borderRadius:99, padding:"3px 10px", fontSize:10, color:C.muted, fontWeight:600 }}>⏱ {item.time}</span>
+                </div>
+                <div style={{ fontSize:15, fontWeight:800, color:C.text, lineHeight:1.4, marginBottom:4 }}>{item.title}</div>
+                <div style={{ fontSize:12, color:C.sub, fontWeight:500, lineHeight:1.6 }}>{item.summary}</div>
+              </div>
+              <div style={{ color:C.muted, fontSize:18, flexShrink:0 }}>›</div>
+            </div>
+          </div>
+        ))}
+
+        {/* WhatsApp */}
+        <div style={{ ...card, textAlign:"center", background:"linear-gradient(135deg,#E8F8F0,#D4F5E4)", border:`1.5px solid ${C.greenBorder}`, marginTop:8 }}>
+          <div style={{ fontSize:13, color:"#1A5C3A", fontWeight:700, marginBottom:10 }}>عندك سؤال عن أي موضوع؟ 🌸</div>
+          <a href="https://wa.me/201000423752" style={{ display:"inline-block", background:"#25D366", border:"none", borderRadius:12, color:"white", padding:"12px 24px", fontSize:13, fontWeight:800, textDecoration:"none" }}>
+            💬 تواصلي مع Dr. Mai
+          </a>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─────────────────────────────────────────────
 //  CHAT TAB
 // ─────────────────────────────────────────────
@@ -1402,6 +1803,153 @@ function ChatTab({ client }) {
 // ─────────────────────────────────────────────
 //  MAIN APP
 // ─────────────────────────────────────────────
+
+// ── LIBRARY TAB ──
+function LibraryTab({ client }) {
+  const [openItem, setOpenItem] = useState(null);
+  const [filter, setFilter] = useState("all");
+
+  const items = [
+    { id:1, type:"article", tag:"PCOS", icon:"🔬", title:"PCOS والتغذية العلاجية", time:"5 دقائق",
+      summary:"كيف تؤثر التغذية على أعراض تكيس المبايض وكيف تتحكمي فيها.",
+      body:"تكيس المبايض (PCOS) هو اضطراب هرموني شائع يؤثر على 1 من كل 10 نساء. التغذية العلاجية تلعب دوراً محورياً في إدارة الأعراض...
+
+أهم المبادئ الغذائية:
+- تقليل السكريات المكررة والكربوهيدرات عالية الجلايسيمي
+- زيادة البروتين والألياف في كل وجبة
+- الدهون الصحية (أفوكادو، زيت زيتون، أوميغا 3)
+- مضادات الأكسدة من الخضار والفاكهة الملونة",
+      tips:["تناولي البروتين في كل وجبة","تجنبي السكر المضاف","مارسي المشي 30 دقيقة يومياً","احرصي على النوم 7-8 ساعات"] },
+    { id:2, type:"article", tag:"Insulin", icon:"🩸", title:"مقاومة الإنسولين — دليلك الكامل", time:"7 دقائق",
+      summary:"فهم مقاومة الإنسولين وكيف تعالجيها بالتغذية.",
+      body:"مقاومة الإنسولين تعني أن خلايا جسمك لا تستجيب بشكل كافٍ للإنسولين، مما يجبر البنكرياس على إنتاج المزيد منه...
+
+علامات مقاومة الإنسولين:
+- تعب شديد بعد الأكل
+- رغبة شديدة في السكريات
+- صعوبة في إنقاص الوزن
+- تقلبات في مستوى الطاقة",
+      tips:["قللي الكربوهيدرات المكررة","اشربي 2-3 لتر ماء يومياً","تناولي الخل التفاح قبل الوجبات","مارسي تمارين المقاومة"] },
+    { id:3, type:"article", tag:"Cycle", icon:"🌙", title:"التغذية حسب مراحل الدورة", time:"6 دقائق",
+      summary:"ما تأكليه في كل مرحلة من دورتك يغير كل حاجة.",
+      body:"جسمك يمر بـ 4 مراحل هرمونية مختلفة خلال الدورة. كل مرحلة تحتاج نوع مختلف من التغذية...
+
+المرحلة 1 (الطمث): ركزي على الحديد والمغنيسيوم — عدس، سبانخ، شوكولاتة داكنة
+المرحلة 2 (الجريبي): بروتين وخضار خضراء — بيض، بروكلي، تفاح
+المرحلة 3 (الإباضة): خام وطازج — فاكهة، سلطات، عصائر
+المرحلة 4 (الأصفر): دهون صحية وكربوهيدرات معقدة — بطاطا حلوة، أفوكادو، بذور",
+      tips:["خططي وجباتك حسب مرحلة دورتك","زيدي الحديد أيام الطمث","قللي الكافيين في المرحلة الأصفر","تناولي المغنيسيوم لتقليل الآلام"] },
+    { id:4, type:"guide", tag:"Hormone", icon:"⚖️", title:"دليل التوازن الهرموني", time:"10 دقائق",
+      summary:"الدليل الشامل لتوازن هرموناتك من خلال الغذاء.",
+      body:"التوازن الهرموني يعتمد على 5 محاور أساسية:
+
+1. التغذية المتوازنة
+2. النوم الكافي
+3. إدارة التوتر
+4. التمارين المناسبة
+5. المكملات الغذائية
+
+الأطعمة الداعمة للهرمونات:
+- الكتان: يدعم الإستروجين الصحي
+- البروكلي: يساعد في التخلص من الإستروجين الزائد
+- الزنجبيل: يقلل الالتهاب
+- الكركم: مضاد أكسدة قوي",
+      tips:["ابدأي يومك ببروتين وليس كربوهيدرات","تجنبي البلاستيك في تخزين الطعام","نامي في غرفة مظلمة تماماً","اعملي فحص هرموني كل 6 أشهر"] },
+    { id:5, type:"recipe", tag:"PCOS", icon:"🥗", title:"سلطة مكافحة الالتهاب", time:"3 دقائق",
+      summary:"وصفة مضادة للالتهاب تدعم توازن هرمونات PCOS.",
+      body:"المكونات:
+- كوب سبانخ طازج
+- نصف أفوكادو
+- ربع كوب جوز
+- حبة طماطم
+- ملعقة زيت زيتون
+- عصير ليمون
+- ملح وفلفل
+
+طريقة التحضير:
+اخلطي كل المكونات معاً. أضيفي زيت الزيتون وعصير الليمون. قدمي فوراً.",
+      tips:["أضيفي بذور الكتان لدعم إضافي","تناوليها على الغداء","يمكن إضافة تونة أو بيض مسلوق للبروتين"] },
+    { id:6, type:"recipe", tag:"Insulin", icon:"🥣", title:"بول الإفطار المتوازن", time:"5 دقائق",
+      summary:"إفطار منخفض الجلايسيمي يثبت السكر ويعطي طاقة طول اليوم.",
+      body:"المكونات:
+- نصف كوب شوفان
+- كوب حليب لوز
+- ملعقة بذور شيا
+- حفنة توت أزرق
+- ملعقة زبدة لوز
+- قرفة حسب الرغبة
+
+طريقة التحضير:
+اطبخي الشوفان بحليب اللوز. أضيفي بذور الشيا واتركي 2 دقيقة. أضيفي التوت وزبدة اللوز والقرفة.",
+      tips:["القرفة تساعد في تنظيم السكر","لا تضيفي سكر أبداً","يمكن تحضيره ليلاً وتناوله بارداً"] },
+  ];
+
+  const tags = ["all","PCOS","Insulin","Cycle","Hormone"];
+  const filtered = filter==="all" ? items : items.filter(i=>i.tag===filter);
+
+  if (openItem) {
+    const item = items.find(x=>x.id===openItem);
+    return (
+      <div style={wrap}>
+        <div style={{ paddingTop:20 }}>
+          <button onClick={()=>setOpenItem(null)} style={{ background:C.blush, border:`1px solid ${C.border}`, borderRadius:10, padding:"8px 16px", fontSize:13, fontWeight:700, color:C.sub, cursor:"pointer", marginBottom:20 }}>← رجوع</button>
+          <div style={{ ...card, padding:"24px 20px" }}>
+            <div style={{ fontSize:48, textAlign:"center", marginBottom:16 }}>{item.icon}</div>
+            <div style={{ display:"flex", gap:8, marginBottom:12 }}>
+              <Tag text={item.tag} color={C.mauve}/>
+              <Tag text={item.type==="recipe"?"🥗 وصفة":"📖 مقال"} color={C.pink}/>
+              <Tag text={`⏱ ${item.time}`} color={C.muted}/>
+            </div>
+            <h1 style={{ fontSize:20, fontWeight:900, color:C.text, marginBottom:12, lineHeight:1.5 }}>{item.title}</h1>
+            <p style={{ fontSize:13, color:C.sub, fontWeight:500, lineHeight:1.9, marginBottom:20, whiteSpace:"pre-line" }}>{item.body}</p>
+            <div style={{ background:C.greenLight, border:`1px solid ${C.greenBorder}`, borderRadius:14, padding:"14px 16px" }}>
+              <div style={{ fontSize:12, fontWeight:800, color:C.green, marginBottom:8 }}>💡 نصائح عملية</div>
+              {item.tips.map((t,i)=><div key={i} style={{ fontSize:13, color:C.text, fontWeight:600, padding:"4px 0", display:"flex", gap:8 }}><span style={{ color:C.green }}>✓</span>{t}</div>)}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={wrap}>
+      <div style={{ paddingTop:20 }}>
+        <div style={{ marginBottom:16 }}>
+          <h2 style={{ fontSize:20, fontWeight:900, color:C.text, marginBottom:4 }}>📚 مكتبتك الهرمونية</h2>
+          <p style={{ fontSize:13, color:C.sub, fontWeight:500 }}>مقالات ووصفات مخصصة لصحتك</p>
+        </div>
+        {/* Filter tags */}
+        <div style={{ display:"flex", gap:8, overflowX:"auto", marginBottom:16, paddingBottom:4 }}>
+          {tags.map(t=>(
+            <button key={t} onClick={()=>setFilter(t)} style={{ padding:"7px 14px", borderRadius:99, fontSize:12, fontWeight:700, cursor:"pointer", whiteSpace:"nowrap", background:filter===t?C.pink:C.bg, border:`1.5px solid ${filter===t?C.pink:C.border}`, color:filter===t?"white":C.sub, transition:"all .15s" }}>
+              {t==="all"?"الكل 📚":t}
+            </button>
+          ))}
+        </div>
+        {/* Items */}
+        {filtered.map(item=>(
+          <div key={item.id} style={{ ...card, cursor:"pointer" }} onClick={()=>setOpenItem(item.id)}>
+            <div style={{ display:"flex", gap:12, alignItems:"center" }}>
+              <div style={{ fontSize:32, flexShrink:0 }}>{item.icon}</div>
+              <div style={{ flex:1 }}>
+                <div style={{ display:"flex", gap:6, marginBottom:6 }}>
+                  <Tag text={item.tag} color={C.mauve}/>
+                  <Tag text={item.type==="recipe"?"🥗 وصفة":"📖 مقال"} color={C.pink} small/>
+                  <Tag text={`⏱ ${item.time}`} color={C.muted} small/>
+                </div>
+                <div style={{ fontSize:14, fontWeight:800, color:C.text, lineHeight:1.4, marginBottom:4 }}>{item.title}</div>
+                <div style={{ fontSize:12, color:C.sub, fontWeight:500, lineHeight:1.5 }}>{item.summary}</div>
+              </div>
+              <div style={{ color:C.muted, fontSize:18, flexShrink:0 }}>›</div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function App() {
   const [screen, setScreen]   = useState("guest"); // guest | login | member
   const [client, setClient]   = useState(null);
@@ -1453,6 +2001,8 @@ export default function App() {
         {activeTab==="cycle"   && <CycleTab      client={client}/>}
         {activeTab==="tracker" && <TrackerTab    client={client}/>}
         {activeTab==="chat"    && <ChatTab       client={client}/>}
+        {activeTab==="library"  && <LibraryTab     client={client}/> }
+        {activeTab==="library"  && <LibraryTab     client={client}/>}
       </div>
 
       <MemberNav active={activeTab} onChange={t=>{ if(t==="home") setActiveTab("home"); else setActiveTab(t); }}/>
