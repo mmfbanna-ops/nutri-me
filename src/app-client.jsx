@@ -80,6 +80,8 @@ const DEMO_CLIENTS = [
   { name:"Mariam", code:"8889", plan:1, startDate:"2026-03-09", sessionDay:0 },
   { name:"Noren",  code:"1351", plan:1, startDate:"2026-03-12", sessionDay:0 },
   { name:"Sara",   code:"1352", plan:1, startDate:"2026-03-18", sessionDay:0 },
+  { name:"Sara Ahmed", code:"1353", plan:1, startDate:"2026-03-26", sessionDay:0 },
+  { name:"Sara Ahmed", code:"1353", plan:1, startDate:"2026-03-26", sessionDay:0 },
 ];
 const PLAN_MONTHS = {1:1,2:2,3:3};
 const DAYS_AR = ["الأحد","الاثنين","الثلاثاء","الأربعاء","الخميس","الجمعة","السبت"];
@@ -413,9 +415,9 @@ function MemberNav({ active, onChange }) {
     { id:"chat",    icon:"💬", label:"الدكتورة" },
   ];
   return (
-    <div style={{ position:"fixed", bottom:0, left:0, right:0, background:C.white, borderTop:`1.5px solid ${C.border}`, display:"flex", zIndex:100, boxShadow:"0 -4px 20px rgba(0,0,0,0.07)", paddingBottom:"env(safe-area-inset-bottom)" }}>
+    <div style={{ position:"fixed", bottom:0, left:0, right:0, background:C.white, borderTop:`1.5px solid ${C.border}`, display:"flex", zIndex:9999, boxShadow:"0 -4px 20px rgba(0,0,0,0.07)", paddingBottom:"env(safe-area-inset-bottom)", pointerEvents:"all" }}>
       {tabs.map(t=>(
-        <button key={t.id} className="tab-btn" onClick={()=>onChange(t.id)}>
+        <button key={t.id} className="tab-btn" onClick={()=>onChange(t.id)} style={{ pointerEvents:"all", cursor:"pointer", WebkitTapHighlightColor:"transparent" }}>
           <span style={{ fontSize:20 }}>{t.icon}</span>
           <span style={{ fontSize:9, fontWeight:800, color:active===t.id?C.pink:C.muted }}>{t.label}</span>
           {active===t.id && <div style={{ width:16, height:2.5, borderRadius:99, background:C.pink }}/>}
@@ -1777,7 +1779,7 @@ function ChatTab({ client }) {
   }
 
   return (
-    <div style={{ maxWidth:480, margin:"0 auto", height:"100vh", display:"flex", flexDirection:"column" }}>
+    <div style={{ maxWidth:480, margin:"0 auto", display:"flex", flexDirection:"column", paddingBottom:80 }}>
       {/* Header */}
       <div style={{ background:C.white, borderBottom:`1px solid ${C.border}`, padding:"14px 20px", display:"flex", alignItems:"center", gap:12 }}>
         <div style={{ width:40, height:40, borderRadius:"50%", background:`linear-gradient(135deg,${C.pink},${C.mauve})`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:18 }}>👩‍⚕️</div>
@@ -1788,7 +1790,7 @@ function ChatTab({ client }) {
       </div>
 
       {/* Messages */}
-      <div style={{ flex:1, overflowY:"auto", padding:"16px", display:"flex", flexDirection:"column", gap:10, background:C.bg, paddingBottom:160 }}>
+      <div style={{ flex:1, padding:"16px", display:"flex", flexDirection:"column", gap:10, background:C.bg, paddingBottom:20 }}>
         {msgs.length===0 && (
           <div style={{ textAlign:"center", padding:"40px 0" }}>
             <div style={{ fontSize:40, marginBottom:10 }}>💌</div>
