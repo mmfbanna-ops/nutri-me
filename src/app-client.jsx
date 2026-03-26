@@ -1817,7 +1817,7 @@ function ChatTab({ client }) {
       </div>
 
       {/* Input */}
-      <div style={{ position:"fixed", bottom:64, left:0, right:0, background:C.white, borderTop:`1px solid ${C.border}`, padding:"10px 16px", display:"flex", gap:10 }}>
+      <div style={{ position:"sticky", bottom:0, left:0, right:0, background:C.white, borderTop:`1px solid ${C.border}`, padding:"10px 16px", display:"flex", gap:10, zIndex:10 }}>
         <input value={input} onChange={e=>setInput(e.target.value)} onKeyDown={e=>e.key==="Enter"&&send()}
           placeholder="اكتبي رسالتك للدكتورة..."
           style={{ flex:1, padding:"11px 14px", borderRadius:12, border:`1.5px solid ${C.border}`, background:C.bg, color:C.text, fontSize:13, outline:"none", direction:"rtl", fontFamily:"'Tajawal',sans-serif" }}/>
